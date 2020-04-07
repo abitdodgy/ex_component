@@ -22,7 +22,6 @@ defmodule ExComponent do
       end
       #=> <div class="alert alert-info m-5">Alert!</div>      
 
-
   The first argument is the component name. See below for other options.
 
   ## Options
@@ -206,16 +205,34 @@ defmodule ExComponent do
           end
 
         3 ->
-          def unquote(name)(variant, do: block), do: unquote(name)(variant, [], do: block)
+          case Keyword.get(unquote(options), :block, true) do
+            true ->
+              def unquote(name)(variant, do: block), do: unquote(name)(variant, [], do: block)
 
-          def unquote(name)(variant, opts, do: block) do
-            render([variant: variant] ++ opts, unquote(options), do: block)
-          end
+              def unquote(name)(variant, opts, do: block) do
+                render([variant: variant] ++ opts, unquote(options), do: block)
+              end
 
-          def unquote(name)(variant, text), do: unquote(name)(variant, text, [])
+              def unquote(name)(variant, text), do: unquote(name)(variant, text, [])
 
-          def unquote(name)(variant, text, opts) when is_binary(text) do
-            render([variant: variant] ++ opts, unquote(options), do: text)
+              def unquote(name)(variant, text, opts) when is_binary(text) do
+                render([variant: variant] ++ opts, unquote(options), do: text)
+              end
+
+            :block_only ->
+              def unquote(name)(variant, do: block), do: unquote(name)(variant, [], do: block)
+
+              def unquote(name)(variant, opts, do: block) do
+                render([variant: variant] ++ opts, unquote(options), do: block)
+              end
+
+            false ->
+              def unquote(name)(variant, text), do: unquote(name)(variant, text, [])
+
+              def unquote(name)(variant, text, opts) when is_binary(text) do
+                render([variant: variant] ++ opts, unquote(options), do: text)
+              end
+
           end
       end
     end
@@ -268,7 +285,7 @@ defmodule ExComponent do
     end
   end
 
-  def put_variants(opts, options) do
+  defp put_variants(opts, options) do
     variants =
       if variants_list = Keyword.get(options, :variants, []) do
         opts

@@ -19,6 +19,8 @@ defmodule ExComponentTest do
     defcomp(:card_image, block: false, class: "card-image", default_tag: :img)
 
     defcomp(:badge, arity: 3, class: "badge", default_tag: :span, variants: [:primary, :secondary])
+
+    defcomp(:my_list, arity: 3, block: :block_only, class: "list", default_tag: :ul, variants: [:primary, :secondary])
   end
 
   describe "defcomp/2 with `arity: 2` and `block: :block_only`" do
@@ -235,4 +237,17 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
   end
+
+  test "arity/3 :block_only" do
+    expected = ~s(<ul class=\"list list-primary\">Content</ul>)
+
+    result =
+      Dummy.my_list :primary do
+        "Content"
+      end
+
+    assert safe_to_string(result) == expected
+  end
+
+  test "arity/3 false"
 end
