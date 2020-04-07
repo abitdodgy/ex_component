@@ -20,7 +20,13 @@ defmodule ExComponentTest do
 
     defcomp(:badge, arity: 3, class: "badge", default_tag: :span, variants: [:primary, :secondary])
 
-    defcomp(:my_list, arity: 3, block: :block_only, class: "list", default_tag: :ul, variants: [:primary, :secondary])
+    defcomp(:my_list,
+      arity: 3,
+      block: :block_only,
+      class: "list",
+      default_tag: :ul,
+      variants: [:primary, :secondary]
+    )
   end
 
   describe "defcomp/2 with `arity: 2` and `block: :block_only`" do

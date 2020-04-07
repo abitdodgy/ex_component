@@ -232,7 +232,6 @@ defmodule ExComponent do
               def unquote(name)(variant, text, opts) when is_binary(text) do
                 render([variant: variant] ++ opts, unquote(options), do: text)
               end
-
           end
       end
     end
