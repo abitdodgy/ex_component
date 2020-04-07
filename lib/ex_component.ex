@@ -29,13 +29,13 @@ defmodule ExComponent do
 
   The `options` argument refers to the component options.
 
-    - `arity` The component function arity
-    - `class` The component CSS class name
-    - `default_tag` The component HTML tag
-    - `delegate` The function to delegate rendering to
-    - `html_opts` A list of opts that will be forwarded to the HTML
-    - `prepend` Any content to prepend before the component
-    - `variants` A list of component variants
+    - `arity` The component function arity. Defaults to `2`.
+    - `class` The component CSS class name. Required.
+    - `default_tag` The component HTML tag. Required.
+    - `delegate` The function to delegate rendering to. Defaults to `Phoenix.HTML.Tag.content_tag/3`.
+    - `html_opts` A list of opts that will be forwarded to the HTML.
+    - `prepend` Any content to prepend before the component.
+    - `variants` A list of component variants.
 
   See below for a detailed explanation of each option.
 

@@ -1,6 +1,27 @@
 # ExComponent
 
-**TODO: Add description**
+This library provides a DSL for generating HTML components.
+
+```elixir
+include ExComponent
+
+defcomp(:alert, arity: 3, class: "alert", default_tag: :div, variants: [:info, :danger])
+
+alert(:info, "Alert!")
+#=> <div class="alert alert-info">Alert!</div>
+
+alert(:danger, "Alert!")
+#=> <div class="alert alert-danger">Alert!</div>
+
+defcomp(:list_group, class: "list-group", default_tag: :ul, variants: :flush)
+
+list_group variant: :flush do
+  ...
+end
+#=> <ul class="list-group list-group-flush">...</ul>
+```
+
+This lib is a work in progress and its API might change.
 
 ## Installation
 
