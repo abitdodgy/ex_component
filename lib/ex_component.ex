@@ -153,27 +153,19 @@ defmodule ExComponent do
   defmacro defcomp(name, options) do
     quote do
       if Keyword.get(unquote(options), :variants) do
-        # comp :variant do
-        #   "content"
-        # end
         def unquote(name)(variant, do: block) when is_atom(variant) do
           unquote(name)([variant: variant], do: block)
         end
 
-        # comp :variant, option: "value"  do
-        #   "content"
-        # end
         def unquote(name)(variant, opts, do: block) when is_atom(variant) do
           unquote(name)([variant: variant] ++ opts, do: block)
         end
 
         unless Keyword.get(unquote(options), :block) == :only do
-          # comp :variant, "content"
           def unquote(name)(variant, content) when is_binary(content) do
             unquote(name)([variant: variant], do: content)
           end
 
-          # comp :variant, "content", option: "value"
           def unquote(name)(variant, content, opts) when is_binary(content) do
             unquote(name)([variant: variant] ++ opts, do: content)
           end
@@ -181,24 +173,16 @@ defmodule ExComponent do
       end
 
       if Keyword.get(unquote(options), :block, true) do
-        # comp do
-        #   "content"
-        # end
         def unquote(name)(do: block), do: unquote(name)([], do: block)      
   
-        # comp option: "value"  do
-        #   "content"
-        # end
         def unquote(name)(opts, do: block) do
           render(opts, unquote(options), do: block)
         end
       end
 
       unless Keyword.get(unquote(options), :block) == :only do
-        # comp "content"
         def unquote(name)(content), do: unquote(name)(content, [])
 
-        # comp "content", option: "value"
         def unquote(name)(content, opts) do
           render(opts, unquote(options), do: content)
         end
