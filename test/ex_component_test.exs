@@ -4,12 +4,12 @@ defmodule ExComponentTest do
   import ExComponent
   import Phoenix.HTML, only: [safe_to_string: 1]
 
-  describe "defcomp `arity: 2` and `block: true`" do
+  describe "defcomp with `arity: 2`" do
     defmodule A do
       defcomp(:list, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
     end
 
-    test "generates component with block only" do
+    test "generates component with block" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
       result =
@@ -20,7 +20,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "generates component with block and options" do
+    test "generates component with block and opts" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
       result =
@@ -28,27 +28,27 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
 
     test "generates component with content" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
-      result = A.list("Content")
+      result = A.list "Content"
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
 
-    test "generates component with content and options" do
+    test "generates component with content and opts" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
-      result = A.list("Content", class: "extra")
+      result = A.list "Content", class: "extra"
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
   end
 
-  describe "defcomp `arity: 2` and `block: false`" do
+  describe "defcomp with `arity: 2` and block false" do
     defmodule B do
       defcomp(:list, block: false, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
     end
@@ -56,42 +56,42 @@ defmodule ExComponentTest do
     test "generates component with content" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
-      result = B.list("Content")
+      result = B.list "Content"
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
 
-    test "generates component with content and options" do
+    test "generates component with content and opts" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
-      result = B.list("Content", class: "extra")
+      result = B.list "Content", class: "extra"
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
 
     test "raises when given a block" do
       assert_raise ArgumentError, fn ->
         B.list do
-          "Content!"
+          "Content"
         end
       end
     end
 
-    test "raises when given content and options" do
+    test "raises when given a block and opts" do
       assert_raise ArgumentError, fn ->
-        B.list do
-          "Content!"
+        B.list class: "extra" do
+          "Content"
         end
       end
     end
   end
 
-  describe "defcomp `arity: 2` and `block: :only`" do
+  describe "defcomp with `arity: 2` and `block: :only`" do
     defmodule C do
       defcomp(:list, block: :only, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
     end
 
-    test "generates component with block only" do
+    test "generates component with a block" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
       result =
@@ -102,7 +102,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "generates component with block and options" do
+    test "generates component with a block and opts" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
       result =
@@ -110,28 +110,28 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
 
     test "raises when given content" do
       assert_raise FunctionClauseError, fn ->
-        C.list("Content!")
+        C.list "Content"
       end
     end
 
-    test "raises when given content and options" do
+    test "raises when given content and opts" do
       assert_raise FunctionClauseError, fn ->
-        C.list("Content!", class: "extra")
+        C.list "Content", class: "extra"
       end
     end
   end
 
-  describe "defcomp `arity: 3` and `block: true`" do
+  describe "defcomp with `arity: 3`" do
     defmodule D do
-      defcomp(:list, arity: 3, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+      defcomp(:list, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
     end
 
-    test "generates component with block only" do
+    test "generates component with atom variant and block" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
       result =
@@ -142,7 +142,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "generates component with block and options" do
+    test "generates component with atom variant, opts and block" do
       expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
 
       result =
@@ -150,43 +150,32 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
 
-    test "generates component with content" do
+    test "generates component with atom variant and content" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
-      result = D.list(:flush, "Content")
+      result = D.list :flush, "Content"
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
 
-    test "generates component with content and options" do
+    test "generates component with atom variant, content and opts" do
       expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
 
-      result = D.list(:flush, "Content", class: "extra")
-
-      assert safe_to_string(result) == expected      
-    end
-
-    test "when variant is a list" do
-      expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
-
-      result =
-        D.list [:flush, :horizontal] do
-          "Content"
-        end
+      result = D.list :flush, "Content", class: "extra"
 
       assert safe_to_string(result) == expected
     end
   end
 
-  describe "defcomp `arity: 3` and `block: :only`" do
+  describe "defcomp with `arity: 3` with `block: only`" do
     defmodule E do
-      defcomp(:list, arity: 3, block: :only, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+      defcomp(:list, block: :only, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
     end
 
-    test "generates component with block only" do
+    test "generates component with atom variant and block" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
       result =
@@ -197,7 +186,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "generates component with block and options" do
+    test "generates component with atom variant, opts and block" do
       expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
 
       result =
@@ -205,30 +194,19 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
 
     test "raises when given content" do
       assert_raise FunctionClauseError, fn ->
-        E.list :flush, "Content!"
+        E.list :flush, "Content"
       end
     end
 
-    test "raises when given content and options" do
+    test "raises when given content and opts" do
       assert_raise FunctionClauseError, fn ->
-        E.list :flush, "Content!", class: "extra"
+        E.list "Content", class: "extra"
       end
-    end
-
-    test "when variant is a list" do
-      expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
-
-      result =
-        E.list [:flush, :horizontal] do
-          "Content"
-        end
-
-      assert safe_to_string(result) == expected
     end
   end
 
@@ -245,7 +223,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected      
+      assert safe_to_string(result) == expected
     end
   end
 
@@ -276,4 +254,118 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
   end
+
+  describe "with variants option" do
+    defmodule I do
+      defcomp(:list, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+    end
+
+    test "generates component with an atom variant option" do
+      expected = ~s(<ul class=\"list list-flush\">Content</ul>)
+
+      result = I.list variant: :flush do
+        "Content"
+      end
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "generates component with a list variant option" do
+      expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
+
+      result = I.list variant: [:flush, :horizontal]  do
+        "Content"
+      end
+
+      assert safe_to_string(result) == expected
+    end
+  end
+
+  describe "with prepend option" do
+    test "prepends given content to the component"
+  end
+
+    # test "generates component with tuple variant and block" do
+    #   expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
+
+    #   result =
+    #     A.list {:flush, :horizontal} do
+    #       "Content"
+    #     end
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+    # test "generates component with atom variant, opts and block" do
+    #   expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
+
+    #   result =
+    #     A.list :flush, class: "extra" do
+    #       "Content"
+    #     end
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+    # test "generates component with tuple variant, opts and block" do
+    #   expected = ~s(<ul class=\"list list-flush list-horizontal extra\">Content</ul>)
+
+    #   result =
+    #     A.list {:flush, :horizontal}, class: "extra" do
+    #       "Content"
+    #     end
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+    # test "generates component with content" do
+    #   expected = ~s(<ul class=\"list\">Content</ul>)
+
+    #   result = A.list "Content"
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+    # test "generates component with content and opts" do
+    #   expected = ~s(<ul class=\"list extra\">Content</ul>)
+
+    #   result = A.list "Content", class: "extra"
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+    # test "generates component with atom variant and content" do
+    #   expected = ~s(<ul class=\"list list-flush\">Content</ul>)
+
+    #   result = A.list :flush, "Content"
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+    # test "generates component with atom variant, content and opts" do
+    #   expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
+
+    #   result = A.list :flush, "Content", class: "extra"
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+    # test "generates component with tuple variant and content" do
+    #   expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
+
+    #   result = A.list {:flush, :horizontal}, "Content"
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+    # test "generates component with tuple variant, content and opts" do
+    #   expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
+
+    #   result = A.list {:flush, :horizontal}, "Content", class: "extra"
+
+    #   assert safe_to_string(result) == expected
+    # end
+
+
+
 end

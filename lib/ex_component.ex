@@ -2,7 +2,7 @@ defmodule ExComponent do
   @moduledoc """
   This lib provides a DSL for generating HTML components.
 
-      defcomp(:alert, arity: 3, class: "alert", default_tag: :div, variants: [:primary, :info])
+      defcomp(:alert, variants: [:primary, :info], class: "alert", default_tag: :div)
 
   This generates the follow function caluses.
 
@@ -112,7 +112,9 @@ defmodule ExComponent do
       end
       #=> <div class="card bg-white">Content</div>
 
-  The `arity: 3` option generates components that accept a variant as the first argument.
+  The `arity: 3` option generates components that accept a variant as the first
+  argument. As such, `block: false` is not available. Variants can be a list of
+  atoms, like `[:primary, :action]`.
 
       defcomp(:card_text, arity: 3, class: "card-text", default_tag: :p)
 
@@ -131,6 +133,13 @@ defmodule ExComponent do
         "Content"
       end
       #=> <span class="card-text float-right">Content</span>
+
+      defcomp(:list_group_item, arity: 3, class: "list-group-item", default_tag: :a, variants: [:primary, :action])
+
+      list_group_item [:primary, :action] do
+        "Content"
+      end
+      #=> <a class="list-group-item list-group-item-primary list-group-item-action">Content</a>
 
   The `block` option is always `true` when using `arity: 3`.
 
@@ -173,59 +182,56 @@ defmodule ExComponent do
   """
   defmacro defcomp(name, options) do
     quote do
-      case Keyword.get(unquote(options), :arity, 2) do
-        2 ->
-          case Keyword.get(unquote(options), :block, true) do
-            true ->
-              def unquote(name)(do: block), do: unquote(name)([], do: block)
+      if Keyword.get(unquote(options), :variants) do
+        # comp :variant do
+        #   "content"
+        # end
+        def unquote(name)(variant, do: block) when is_atom(variant) do
+          unquote(name)([variant: variant], do: block)
+        end
 
-              def unquote(name)(opts, do: block) do
-                render(opts, unquote(options), do: block)
-              end
+        # comp :variant, option: "value"  do
+        #   "content"
+        # end
+        def unquote(name)(variant, opts, do: block) when is_atom(variant) do
+          unquote(name)([variant: variant] ++ opts, do: block)
+        end
 
-              def unquote(name)(text), do: unquote(name)(text, [])
-
-              def unquote(name)(text, opts) do
-                render(opts, unquote(options), do: text)
-              end
-
-            :only ->
-              def unquote(name)(do: block), do: unquote(name)([], do: block)
-
-              def unquote(name)(opts, do: block) do
-                render(opts, unquote(options), do: block)
-              end
-
-            false ->
-              def unquote(name)(text), do: unquote(name)(text, [])
-
-              def unquote(name)(text, opts) do
-                render(opts, unquote(options), do: text)
-              end
+        unless Keyword.get(unquote(options), :block) == :only do
+          # comp :variant, "content"
+          def unquote(name)(variant, content) when is_binary(content) do
+            unquote(name)([variant: variant], do: content)
           end
 
-        3 ->
-          case Keyword.get(unquote(options), :block, true) do
-            true ->
-              def unquote(name)(variant, do: block), do: unquote(name)(variant, [], do: block)
-
-              def unquote(name)(variant, opts, do: block) do
-                render([variant: variant] ++ opts, unquote(options), do: block)
-              end
-
-              def unquote(name)(variant, text), do: unquote(name)(variant, text, [])
-
-              def unquote(name)(variant, text, opts) when is_binary(text) do
-                render([variant: variant] ++ opts, unquote(options), do: text)
-              end
-
-            :only ->
-              def unquote(name)(variant, do: block), do: unquote(name)(variant, [], do: block)
-
-              def unquote(name)(variant, opts, do: block) do
-                render([variant: variant] ++ opts, unquote(options), do: block)
-              end
+          # comp :variant, "content", option: "value"
+          def unquote(name)(variant, content, opts) when is_binary(content) do
+            unquote(name)([variant: variant] ++ opts, do: content)
           end
+        end
+      end
+
+      if Keyword.get(unquote(options), :block, true) do
+        # comp do
+        #   "content"
+        # end
+        def unquote(name)(do: block), do: unquote(name)([], do: block)      
+  
+        # comp option: "value"  do
+        #   "content"
+        # end
+        def unquote(name)(opts, do: block) do
+          render(opts, unquote(options), do: block)
+        end
+      end
+
+      unless Keyword.get(unquote(options), :block) == :only do
+        # comp "content"
+        def unquote(name)(content), do: unquote(name)(content, [])
+
+        # comp "content", option: "value"
+        def unquote(name)(content, opts) do
+          render(opts, unquote(options), do: content)
+        end
       end
     end
   end
