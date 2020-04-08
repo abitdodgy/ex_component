@@ -259,14 +259,7 @@ defmodule ExComponent do
 
   defp get_function(opts, options) do
     opts
-    |> Keyword.get(:delegate, Keyword.get(options, :delegate))
-    |> case do
-      nil ->
-        &Phoenix.HTML.Tag.content_tag/3
-
-      func ->
-        func
-    end
+    |> Keyword.get(:delegate, Keyword.get(options, :delegate, &Phoenix.HTML.Tag.content_tag/3))
   end
 
   defp put_class(opts, options) do
