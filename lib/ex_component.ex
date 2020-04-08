@@ -2,25 +2,25 @@ defmodule ExComponent do
   @moduledoc """
   This lib provides a DSL for generating HTML components.
 
-      defcomp(:alert, variants: [:primary, :info], class: "alert", default_tag: :div)
+      defcomp(:alert, variants: [:primary], class: "alert", default_tag: :div)
 
   This generates the follow function caluses.
 
-      list_group :info, "Alert!" 
-      #=> <div class="alert alert-info">Alert!</div>
-
-      list_group :info, "Alert!", class: "m-5"
-      #=> <div class="alert alert-info m-5">Alert!</div>
-
-      list_group :info do
+      list_group :primary do
         "Alert!"
       end
-      #=> <div class="alert alert-info">Alert!</div>      
+      #=> <div class="alert alert-primary">Alert!</div>      
 
-      list_group :info class: "m-5" do
+      list_group :primary, "Alert!" 
+      #=> <div class="alert alert-primary">Alert!</div>
+
+      list_group :primary class: "m-5" do
         "Alert!"
       end
-      #=> <div class="alert alert-info m-5">Alert!</div>      
+      #=> <div class="alert alert-primary m-5">Alert!</div>      
+
+      list_group :primary, "Alert!", class: "m-5"
+      #=> <div class="alert alert-primary m-5">Alert!</div>
 
   The first argument is the component name. See below for other options.
 
@@ -28,7 +28,6 @@ defmodule ExComponent do
 
   The `options` argument refers to the component options.
 
-    - `arity` The component function arity. Defaults to `2`.
     - `class` The component CSS class name. Required.
     - `default_tag` The component HTML tag. Required.
     - `delegate` The function to delegate rendering to. Defaults to `Phoenix.HTML.Tag.content_tag/3`.
@@ -50,54 +49,56 @@ defmodule ExComponent do
 
   ### Variants
 
-  A variant is a component modifier class, like `success`.
+  A variant is a component modifier class. Passing a variant option
+  automatically defines `component/3` arity functions for each variant.
 
-      <div class="alert alert-success">Success!</div>
+      defcomp(:alert, class: "alert", default_tag: :div, variants: [:success])
 
-  Variants must be declared at the component level to work.
+      alert :success, class: "extra" do
+        "Alert!"
+      end
+      #=> <div class="alert alert-success extra">Alert!</div>
 
-      defcomp(:alert, class: "alert", default_tag: :div, variants: [:info, :success])
+      alert :success, "Alert!", class: "extra"
+      #=> <div class="alert alert-success extra">Alert!</div>
 
-  Use variants by passing the `variant` option. You can pass a list of variants.
+  ### Blocks
 
-      list_group_item tag: :a, variant: [:success, :action] ..
-      #=> <a class="list-group-item list-group-item-success list-group-item-action"> ...
+  The `block` options controls the generation of function clauses.
 
-  ### Arity and Blocks
+  When `true`, the default, it generates the following function clauses.
 
-  The `arity` and `block` options control the generation of function clauses.
+      defcomp(:alert, class: "alert", default_tag: :div)
 
-  Use `arity: 2` to generate function clauses that accept content and
-  an options list.
-
-      defcomp(:card_text, arity: 2, class: "card-text", default_tag: :p)
-
-      card_text "Content"
-      #=> <p class="card-text">Content</p>
-    
-      card_text "Content", class: "text-right"
-      #=> <p class="card-text text-right">Content</p>
-
-  The `block` option, which defaults to `true`, generates the following block clauses.
-
-      card_text do
+      alert do
         "Content"
       end
-      #=> <p class="card-text">Content</p>
+      #=> <div class="alert">Content</div>
 
-      card_text class: "text-right" do
+      alert class: "text-right" do
         "Content"
       end
-      #=> <p class="card-text text-right">Content</p>
+      #=> <div class="alert text-right">Content</div>
 
-  You can disable block clauses using `block: false`.
+  If the component has defined variants, an component/3 function clause
+  for each variant is defined.
 
-      defcomp(:card_text, arity: 2, block: false, class: "card-text", default_tag: :p)
+      defcomp(:alert, class: "alert", default_tag: :div, variants: [:success])
+
+      alert :success do
+        "Content"
+      end
+      #=> <div class="alert alert-success">Content</div>
+
+      alert :success, class: "text-right" do
+        "Content"
+      end
+      #=> <div class="alert alert-success text-right">Content</div>
 
   Sometimes, it's useful to generate function clauses that only accept blocks. You can
-  use the `block: :only_block` option for that.
+  use the `block: :only` option for that.
 
-      defcomp(:card_text, arity: 2, block: :only_block, class: "card-text", default_tag: :p)
+      defcomp(:card_text, block: :only, class: "card-text", default_tag: :p)
 
   This is useful for components that nest other components but do not have
   their own content, like `card`.
@@ -111,37 +112,6 @@ defmodule ExComponent do
         "Content"
       end
       #=> <div class="card bg-white">Content</div>
-
-  The `arity: 3` option generates components that accept a variant as the first
-  argument. As such, `block: false` is not available. Variants can be a list of
-  atoms, like `[:primary, :action]`.
-
-      defcomp(:card_text, arity: 3, class: "card-text", default_tag: :p)
-
-      badge :primary, "Content"
-      #=> <span class="card-text text-right">Content</span>
-
-      badge :primary, "Content", class: "float-right"
-      #=> <span class="card-text float-right">Content</span>
-
-      badge :primary do
-        "Content"
-      end
-      #=> <span class="card-text float-right">Content</span>
-
-      badge :primary, class: "float-right" do
-        "Content"
-      end
-      #=> <span class="card-text float-right">Content</span>
-
-      defcomp(:list_group_item, arity: 3, class: "list-group-item", default_tag: :a, variants: [:primary, :action])
-
-      list_group_item [:primary, :action] do
-        "Content"
-      end
-      #=> <a class="list-group-item list-group-item-primary list-group-item-action">Content</a>
-
-  The `block` option is always `true` when using `arity: 3`.
 
   ### Prepending Content
 
