@@ -1,85 +1,179 @@
 defmodule ExComponentTest do
   use ExUnit.Case
 
-  # doctest ExComponent
-
+  import ExComponent
   import Phoenix.HTML, only: [safe_to_string: 1]
 
-  defmodule Dummy do
-    import ExComponent
+  describe "defcomp `arity: 2` and `block: true`" do
+    defmodule A do
+      defcomp(:list, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+    end
 
-    defcomp(:list,
-      block: :block_only,
-      class: "list",
-      default_tag: :ul,
-      variants: [:flush, :horizontal]
-    )
-
-    defcomp(:list_item, class: "list-item", default_tag: :li, variants: [:primary, :action])
-    defcomp(:card_image, block: false, class: "card-image", default_tag: :img)
-
-    defcomp(:badge, arity: 3, class: "badge", default_tag: :span, variants: [:primary, :secondary])
-
-    defcomp(:my_list,
-      arity: 3,
-      block: :block_only,
-      class: "list",
-      default_tag: :ul,
-      variants: [:primary, :secondary]
-    )
-  end
-
-  describe "defcomp/2 with `arity: 2` and `block: :block_only`" do
-    test "generates the component" do
+    test "generates component with block only" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
       result =
-        Dummy.list do
+        A.list do
           "Content"
         end
 
       assert safe_to_string(result) == expected
     end
 
-    test "accepts a list of options" do
+    test "generates component with block and options" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
       result =
-        Dummy.list class: :extra do
+        A.list class: "extra" do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected      
+    end
+
+    test "generates component with content" do
+      expected = ~s(<ul class=\"list\">Content</ul>)
+
+      result = A.list("Content")
+
+      assert safe_to_string(result) == expected      
+    end
+
+    test "generates component with content and options" do
+      expected = ~s(<ul class=\"list extra\">Content</ul>)
+
+      result = A.list("Content", class: "extra")
+
+      assert safe_to_string(result) == expected      
+    end
+  end
+
+  describe "defcomp `arity: 2` and `block: false`" do
+    defmodule B do
+      defcomp(:list, block: false, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+    end
+
+    test "generates component with content" do
+      expected = ~s(<ul class=\"list\">Content</ul>)
+
+      result = B.list("Content")
+
+      assert safe_to_string(result) == expected      
+    end
+
+    test "generates component with content and options" do
+      expected = ~s(<ul class=\"list extra\">Content</ul>)
+
+      result = B.list("Content", class: "extra")
+
+      assert safe_to_string(result) == expected      
+    end
+
+    test "raises when given a block" do
+      assert_raise ArgumentError, fn ->
+        B.list do
+          "Content!"
+        end
+      end
+    end
+
+    test "raises when given content and options" do
+      assert_raise ArgumentError, fn ->
+        B.list do
+          "Content!"
+        end
+      end
+    end
+  end
+
+  describe "defcomp `arity: 2` and `block: :only`" do
+    defmodule C do
+      defcomp(:list, block: :only, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+    end
+
+    test "generates component with block only" do
+      expected = ~s(<ul class=\"list\">Content</ul>)
+
+      result =
+        C.list do
           "Content"
         end
 
       assert safe_to_string(result) == expected
+    end
+
+    test "generates component with block and options" do
+      expected = ~s(<ul class=\"list extra\">Content</ul>)
+
+      result =
+        C.list class: "extra" do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected      
     end
 
     test "raises when given content" do
       assert_raise FunctionClauseError, fn ->
-        Dummy.list("Content!")
+        C.list("Content!")
       end
     end
 
     test "raises when given content and options" do
       assert_raise FunctionClauseError, fn ->
-        Dummy.list("Content!", class: :extra)
+        C.list("Content!", class: "extra")
       end
     end
+  end
 
-    test "accepts atom `variant` option" do
+  describe "defcomp `arity: 3` and `block: true`" do
+    defmodule D do
+      defcomp(:list, arity: 3, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+    end
+
+    test "generates component with block only" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
       result =
-        Dummy.list variant: :flush do
+        D.list :flush do
           "Content"
         end
 
       assert safe_to_string(result) == expected
     end
 
-    test "accepts list `variant` option" do
+    test "generates component with block and options" do
+      expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
+
+      result =
+        D.list :flush, class: "extra" do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected      
+    end
+
+    test "generates component with content" do
+      expected = ~s(<ul class=\"list list-flush\">Content</ul>)
+
+      result = D.list(:flush, "Content")
+
+      assert safe_to_string(result) == expected      
+    end
+
+    test "generates component with content and options" do
+      expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
+
+      result = D.list(:flush, "Content", class: "extra")
+
+      assert safe_to_string(result) == expected      
+    end
+
+    test "when variant is a list" do
       expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
 
       result =
-        Dummy.list variant: [:flush, :horizontal] do
+        D.list [:flush, :horizontal] do
           "Content"
         end
 
@@ -87,61 +181,50 @@ defmodule ExComponentTest do
     end
   end
 
-  describe "defcomp/2 with `arity: 2` and `block: true`" do
-    test "generates the component" do
-      expected = ~s(<li class=\"list-item\">Item!</li>)
+  describe "defcomp `arity: 3` and `block: :only`" do
+    defmodule E do
+      defcomp(:list, arity: 3, block: :only, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+    end
+
+    test "generates component with block only" do
+      expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
       result =
-        Dummy.list_item do
-          "Item!"
-        end
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "accepts a list of options" do
-      expected = ~s(<li class=\"list-item extra\">Item!</li>)
-
-      result =
-        Dummy.list_item class: "extra" do
-          "Item!"
-        end
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "accepts content" do
-      expected = ~s(<li class=\"list-item\">Content</li>)
-
-      result = Dummy.list_item("Content")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "accepts content with options" do
-      expected = ~s(<li class=\"list-item extra\">Content</li>)
-
-      result = Dummy.list_item("Content", class: "extra")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "accepts atom `variant` option" do
-      expected = ~s(<li class=\"list-item list-item-primary\">Content</li>)
-
-      result =
-        Dummy.list_item variant: :primary do
+        E.list :flush do
           "Content"
         end
 
       assert safe_to_string(result) == expected
     end
 
-    test "accepts list `variant` option" do
-      expected = ~s(<li class=\"list-item list-item-action list-item-primary\">Content</li>)
+    test "generates component with block and options" do
+      expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
 
       result =
-        Dummy.list_item variant: [:action, :primary] do
+        E.list :flush, class: "extra" do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected      
+    end
+
+    test "raises when given content" do
+      assert_raise FunctionClauseError, fn ->
+        E.list :flush, "Content!"
+      end
+    end
+
+    test "raises when given content and options" do
+      assert_raise FunctionClauseError, fn ->
+        E.list :flush, "Content!", class: "extra"
+      end
+    end
+
+    test "when variant is a list" do
+      expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
+
+      result =
+        E.list [:flush, :horizontal] do
           "Content"
         end
 
@@ -149,111 +232,48 @@ defmodule ExComponentTest do
     end
   end
 
-  describe "with function delegation" do
+  describe "with tag option" do
+    defmodule F do
+      defcomp(:list, class: "list", default_tag: :ul)
+    end
+
+    test "generates component with a custom tag" do
+      expected = ~s(<div class=\"list\">Content</div>)
+
+      result =
+        F.list tag: :div do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected      
+    end
+  end
+
+  describe "with component delegate option" do
+    defmodule G do
+      defcomp(:image, class: "image", delegate: &Phoenix.HTML.Tag.img_tag/2)
+    end
+
     test "delegates to the given function" do
-      expected = ~s(<a class=\"list-item\" href=\"#\">Link!</a>)
+      expected = ~s(<img class=\"image\" src="path">)
 
-      result = Dummy.list_item("Link!", to: "#", delegate: &Phoenix.HTML.Link.link/2)
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "delegates to the given function with a block" do
-      expected = ~s(<a class=\"list-item\" href=\"#\">Link!</a>)
-
-      result =
-        Dummy.list_item to: "#", delegate: &Phoenix.HTML.Link.link/2 do
-          "Link!"
-        end
+      result = G.image("path")
 
       assert safe_to_string(result) == expected
     end
   end
 
-  describe "defcomp/2 with `arity` 2 and `:no_block`" do
-    test "generates the component" do
-      expected = ~s(<img class=\"card-image\")
-
-      result = Dummy.card_image("path")
-
-      assert safe_to_string(result) =~ expected
+  describe "with function delegate option" do
+    defmodule H do
+      defcomp(:link, class: "link", delegate: &Phoenix.HTML.Link.link/2)
     end
 
-    test "accepts a list of options" do
-      expected = ~s(<img class=\"card-image\")
+    test "overrides delegate in component definition" do
+      expected = ~s(<img class="link" src="path">)
 
-      result = Dummy.card_image("path", variant: :top)
-
-      assert safe_to_string(result) =~ expected
-    end
-
-    test "raises when given a block" do
-      assert_raise ArgumentError, fn ->
-        Dummy.card_image do
-          "path"
-        end
-      end
-    end
-
-    test "raises when given a block and options" do
-      assert_raise ArgumentError, fn ->
-        Dummy.card_image class: "extra" do
-          "path"
-        end
-      end
-    end
-  end
-
-  describe "defcomp with `arity: 3`" do
-    test "generates the component" do
-      expected = ~s(<span class=\"badge badge-primary\">Content</span>)
-
-      result = Dummy.badge(:primary, "Content")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "accepts a list of options" do
-      expected = ~s(<span class=\"badge badge-primary extra\">Content</span>)
-
-      result = Dummy.badge(:primary, "Content", class: "extra")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "accepts a block" do
-      expected = ~s(<span class=\"badge badge-primary\">Content</span>)
-
-      result =
-        Dummy.badge :primary do
-          "Content"
-        end
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "accepts a with options" do
-      expected = ~s(<span class=\"badge badge-primary extra\">Content</span>)
-
-      result =
-        Dummy.badge :primary, class: "extra" do
-          "Content"
-        end
+      result = H.link("path", delegate: &Phoenix.HTML.Tag.img_tag/2)
 
       assert safe_to_string(result) == expected
     end
   end
-
-  test "arity/3 :block_only" do
-    expected = ~s(<ul class=\"list list-primary\">Content</ul>)
-
-    result =
-      Dummy.my_list :primary do
-        "Content"
-      end
-
-    assert safe_to_string(result) == expected
-  end
-
-  test "arity/3 false"
 end

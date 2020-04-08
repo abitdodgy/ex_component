@@ -189,7 +189,7 @@ defmodule ExComponent do
                 render(opts, unquote(options), do: text)
               end
 
-            :block_only ->
+            :only ->
               def unquote(name)(do: block), do: unquote(name)([], do: block)
 
               def unquote(name)(opts, do: block) do
@@ -219,18 +219,11 @@ defmodule ExComponent do
                 render([variant: variant] ++ opts, unquote(options), do: text)
               end
 
-            :block_only ->
+            :only ->
               def unquote(name)(variant, do: block), do: unquote(name)(variant, [], do: block)
 
               def unquote(name)(variant, opts, do: block) do
                 render([variant: variant] ++ opts, unquote(options), do: block)
-              end
-
-            false ->
-              def unquote(name)(variant, text), do: unquote(name)(variant, text, [])
-
-              def unquote(name)(variant, text, opts) when is_binary(text) do
-                render([variant: variant] ++ opts, unquote(options), do: text)
               end
           end
       end
