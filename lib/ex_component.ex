@@ -228,7 +228,7 @@ defmodule ExComponent do
     - `variant` An atom or a list of atom component variants
 
   """
-  def render(opts, options, do: block) when is_list(opts) do
+  def render(opts, options, do: block) do
     tag = Keyword.get(opts, :tag, Keyword.get(options, :default_tag))
     fun = get_function(opts, options)
 
