@@ -17,7 +17,7 @@ alert(:success, "Alert!")
 
 defcomp(:list_group, class: "list-group", default_tag: :ul, variants: :flush)
 
-list_group variant: :flush do
+list_group :flush do
   ...
 end
 #=> <ul class="list-group list-group-flush">...</ul>

@@ -34,7 +34,7 @@ defmodule ExComponentTest do
     test "generates component with content" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
-      result = A.list "Content"
+      result = A.list("Content")
 
       assert safe_to_string(result) == expected
     end
@@ -42,7 +42,7 @@ defmodule ExComponentTest do
     test "generates component with content and opts" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
-      result = A.list "Content", class: "extra"
+      result = A.list("Content", class: "extra")
 
       assert safe_to_string(result) == expected
     end
@@ -50,13 +50,18 @@ defmodule ExComponentTest do
 
   describe "defcomp with `arity: 2` and block false" do
     defmodule B do
-      defcomp(:list, block: false, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+      defcomp(:list,
+        block: false,
+        class: "list",
+        default_tag: :ul,
+        variants: [:flush, :horizontal]
+      )
     end
 
     test "generates component with content" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
-      result = B.list "Content"
+      result = B.list("Content")
 
       assert safe_to_string(result) == expected
     end
@@ -64,7 +69,7 @@ defmodule ExComponentTest do
     test "generates component with content and opts" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
-      result = B.list "Content", class: "extra"
+      result = B.list("Content", class: "extra")
 
       assert safe_to_string(result) == expected
     end
@@ -88,7 +93,12 @@ defmodule ExComponentTest do
 
   describe "defcomp with `arity: 2` and `block: :only`" do
     defmodule C do
-      defcomp(:list, block: :only, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+      defcomp(:list,
+        block: :only,
+        class: "list",
+        default_tag: :ul,
+        variants: [:flush, :horizontal]
+      )
     end
 
     test "generates component with a block" do
@@ -115,13 +125,13 @@ defmodule ExComponentTest do
 
     test "raises when given content" do
       assert_raise FunctionClauseError, fn ->
-        C.list "Content"
+        C.list("Content")
       end
     end
 
     test "raises when given content and opts" do
       assert_raise FunctionClauseError, fn ->
-        C.list "Content", class: "extra"
+        C.list("Content", class: "extra")
       end
     end
   end
@@ -156,7 +166,7 @@ defmodule ExComponentTest do
     test "generates component with atom variant and content" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
-      result = D.list :flush, "Content"
+      result = D.list(:flush, "Content")
 
       assert safe_to_string(result) == expected
     end
@@ -164,7 +174,7 @@ defmodule ExComponentTest do
     test "generates component with atom variant, content and opts" do
       expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
 
-      result = D.list :flush, "Content", class: "extra"
+      result = D.list(:flush, "Content", class: "extra")
 
       assert safe_to_string(result) == expected
     end
@@ -172,7 +182,12 @@ defmodule ExComponentTest do
 
   describe "defcomp with `arity: 3` with `block: only`" do
     defmodule E do
-      defcomp(:list, block: :only, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+      defcomp(:list,
+        block: :only,
+        class: "list",
+        default_tag: :ul,
+        variants: [:flush, :horizontal]
+      )
     end
 
     test "generates component with atom variant and block" do
@@ -199,13 +214,13 @@ defmodule ExComponentTest do
 
     test "raises when given content" do
       assert_raise FunctionClauseError, fn ->
-        E.list :flush, "Content"
+        E.list(:flush, "Content")
       end
     end
 
     test "raises when given content and opts" do
       assert_raise FunctionClauseError, fn ->
-        E.list "Content", class: "extra"
+        E.list("Content", class: "extra")
       end
     end
   end
@@ -263,9 +278,10 @@ defmodule ExComponentTest do
     test "generates component with an atom variant option" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
-      result = I.list variant: :flush do
-        "Content"
-      end
+      result =
+        I.list variant: :flush do
+          "Content"
+        end
 
       assert safe_to_string(result) == expected
     end
@@ -273,15 +289,68 @@ defmodule ExComponentTest do
     test "generates component with a list variant option" do
       expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
 
-      result = I.list variant: [:flush, :horizontal]  do
-        "Content"
-      end
+      result =
+        I.list variant: [:flush, :horizontal] do
+          "Content"
+        end
 
       assert safe_to_string(result) == expected
     end
   end
 
   describe "with prepend option" do
-    test "prepends given content to the component"
+    defmodule Icon do
+      defcomp(:icon, class: "icon", default_tag: :a)
+    end
+
+    defmodule PrependContent do
+      defcomp(:breadcrumb, class: "breadcrumb", default_tag: :ol, prepend: Icon.icon("some-icon"))
+    end
+
+    test "prepends given content to the component" do
+      expected = ~s(<ol class=\"breadcrumb\"><a class=\"icon\">some-icon</a>Content</ol>)
+
+      result =
+        PrependContent.breadcrumb do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected
+    end
+
+    defmodule PrependTag do
+      defcomp(:breadcrumb, class: "breadcrumb", prepend: :hr, default_tag: :ol)
+    end
+
+    test "prepends given tag to the component" do
+      expected = ~s(<ol class=\"breadcrumb\"><hr>Content</ol>)
+
+      result =
+        PrependTag.breadcrumb do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected
+    end
+  end
+
+  describe "with `nest` option" do
+    defmodule K do
+      defcomp(:breadcrumb, class: "breadcrumb", nest: :nav, default_tag: :ol)
+    end
+
+    test "nests content in the given tage" do
+      expected =
+        ~s(<nav>) <>
+          ~s(<ol class=\"breadcrumb\">Content</ol>) <>
+          ~s(</nav>)
+
+      result =
+        K.breadcrumb do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected
+    end
   end
 end

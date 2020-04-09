@@ -2,55 +2,70 @@ defmodule ExComponent do
   @moduledoc """
   This lib provides a DSL for generating HTML components.
 
-      defcomp(:alert, variants: [:primary], class: "alert", default_tag: :div)
+      defcomp(:alert, variants: [:primary, :success], class: "list-group", default_tag: :div)
 
-  This generates the follow function caluses.
+      alert "Alert!"
+      #=> <div class="alert">Alert!</div>      
 
-      list_group :primary do
-        "Alert!"
-      end
+      alert :primary, "Alert!"
       #=> <div class="alert alert-primary">Alert!</div>      
 
-      list_group :primary, "Alert!" 
-      #=> <div class="alert alert-primary">Alert!</div>
+      alert :success, "Alert!"
+      #=> <div class="alert alert-success">Alert!</div>      
 
-      list_group :primary class: "m-5" do
+  Notice that a `component/2` clause is generated for the base component, and
+  a `component/3` clause for each variant.
+
+  All generated function clauses accept a block, and a list of opts that
+  is forwarded onto the HTML.
+
+      alert class: "extra" do
         "Alert!"
       end
-      #=> <div class="alert alert-primary m-5">Alert!</div>      
+      #=> <div class="alert extra">Alert!</div>
 
-      list_group :primary, "Alert!", class: "m-5"
-      #=> <div class="alert alert-primary m-5">Alert!</div>
+      alert :primary do
+        "Alert!"
+      end
+      #=> <div class="alert alert-primary">Alert!</div>
 
-  The first argument is the component name. See below for other options.
+      alert :primary, class: "extra" do
+        "Alert!"
+      end
+      #=> <div class="alert alert-primary extra">Alert!</div>
+
+      alert :primary, "Alert!", class: "extra"
+      #=> <div class="alert alert-primary extra">Alert!</div>
+
+  See below for an explanation of the options.
 
   ## Options
 
-  The `options` argument refers to the component options.
+    * `:class` - the component's class name. This option is required.
 
-    - `class` The component CSS class name. Required.
-    - `default_tag` The component HTML tag. Required.
-    - `delegate` The function to delegate rendering to. Defaults to `Phoenix.HTML.Tag.content_tag/3`.
-    - `html_opts` A list of opts that will be forwarded to the HTML.
-    - `prepend` Any content to prepend before the component.
-    - `variants` A list of component variants.
+    * `:block` - when `true`, generates an additional block syntax for each function clause. When `:only`, generates only block syntax for each function clause. Use `false` to disable block generation. Defaults to `true`.
 
-  See below for a detailed explanation of each option.
+    * `:default_tag` - the component's HTML tag. This option is required.
 
-  ### Class
+    * `:delegate` - delegates rendering to the given function. Defaults to `&Phoenix.HTML.Tag.content_tag/3`.
+    
+    * `:html_opts` - a list of opts to forward onto the HTML.
 
-  The `class` is the base class of the component. It is also used to build
+    * `:nest` - nests the component in the given option. This option can be a function that generates another component or an atom HTML tag name.
+
+    * `:prepend` - prepends the given content to the component. Can be a function that generates another component or an atom of a self-closing HTML tag.
+
+    * `:variants` - a list of component variants. Each variant generates a `component/3` function clause.
+
+  The `:class` is the base class of the component and is used to build
   variant classes in the form `class="{class class-variant}"`.
 
-  ### Default Tag
+  The `:default_tag` sets the default tag to use when building the component. It can
+  be overriden by passing the `:tag` option during function calls.
 
-  The `default_tag` sets the default tag to use when building the component. The
-  default tag can be overriden by calling the function with a `tag` option.
-
-  ### Variants
-
-  A variant is a component modifier class. Passing a variant option
-  automatically defines `component/3` arity functions for each variant.
+  The `:variants` option adds a modifier class to the component and automatically
+  generates `component/3` function clauses for each variant, where the variant is the
+  first argument.
 
       defcomp(:alert, class: "alert", default_tag: :div, variants: [:success])
 
@@ -59,63 +74,52 @@ defmodule ExComponent do
       end
       #=> <div class="alert alert-success extra">Alert!</div>
 
-      alert :success, "Alert!", class: "extra"
-      #=> <div class="alert alert-success extra">Alert!</div>
+  For components that can have multiple variants, use `component/2` and
+  pass a list to the `:variant` option.
 
-  ### Blocks
+      defcomp(:list_group, class: "list-group", default_tag: :div, variants: [:flush, :horizontal])
 
-  The `block` options controls the generation of function clauses.
-
-  When `true`, the default, it generates the following function clauses.
-
-      defcomp(:alert, class: "alert", default_tag: :div)
-
-      alert do
-        "Content"
+      list_group variant: [:flush, :horizontal], class: "extra" do
+        "..."
       end
-      #=> <div class="alert">Content</div>
+      #=> <div class="list-group list-group-flush list-group-horizontal ">...</div>
 
-      alert class: "text-right" do
-        "Content"
-      end
-      #=> <div class="alert text-right">Content</div>
+  ## Blocks
 
-  If the component has defined variants, an component/3 function clause
-  for each variant is defined.
+  The `:block` option defaults to `true` and generates additional block syntax clauses for each function.
 
-      defcomp(:alert, class: "alert", default_tag: :div, variants: [:success])
+      defcomp(:alert, block: true, ...)
 
-      alert :success do
-        "Content"
-      end
-      #=> <div class="alert alert-success">Content</div>
+      alert "Alert!"
+      #=> <div class="alert">Alert!</div>
 
-      alert :success, class: "text-right" do
-        "Content"
-      end
-      #=> <div class="alert alert-success text-right">Content</div>
+      alert do: "Alert!"
+      #=> <div class="alert">Alert!</div>
 
-  Sometimes, it's useful to generate function clauses that only accept blocks. You can
-  use the `block: :only` option for that.
+  Pass `:only` to generate only block clauses, which is useful for components
+  that nest other components but do not have their own content, like `card`.
 
-      defcomp(:card_text, block: :only, class: "card-text", default_tag: :p)
+      defcomp(:card, block: :only, ...)
 
-  This is useful for components that nest other components but do not have
-  their own content, like `card`.
-
-      card do
-        card_header ...
-      end
+      card do: card_header(...)
       #=> <div class="card">...</div>
 
-      card class: "bg-white" do
-        "Content"
-      end
-      #=> <div class="card bg-white">Content</div>
+      card card_header(...)
+      ** FunctionClauseError ...
 
-  ### Prepending Content
+  Pass `false` to disable block clause generation.
 
-  Use the `prepend` option to prepend other components. This is useful for
+      defcomp(:card, block: :false, ...)
+
+      card do: card_header(...)
+      ** FunctionClauseError ...
+
+      card card_header(...)
+      #=> <div class="card">...</div>
+
+  ## Prepending Content
+
+  Use the `:prepend` option to prepend other components. This is useful for
   alerts that can have a close button.
 
     defcomp(:alert, arity: 3, class: "alert", default_tag: :div, prepend: close_button(role: :alert), variants: [:primary])
@@ -130,26 +134,43 @@ defmodule ExComponent do
           Content
         </div>
 
-  ### Function Delegation
+  If you pass an atom it will be forwarded to `Phoenix.HTML.Tag/1`. You can pass safe
+  content, like the result of a function call to another component.
 
-  Pass a function capture to the `delegate` option to forward execution to
-  another function. This is useful for generating tags using `Phoenix.HTML`.
+  ## Nesting Components
+
+  The `:nest` option allows you to nest the component in the given content. When given a tag name,
+  it is forwarded onto `Phoenix.HTML.Tag.content_tag/3`. You can also use function
+  calls to generate other components.
+
+  This option is useful for wrapping components in parent tags. For example, breadcrumbs
+  in Bootstrap are built with an `ol` tag wrapped in a `nav` tag.
+
+      defcomp(:breadcrumbs, default_tag: :ol, ..., nest: nav())
+      defcomp(:breadcrumbs, default_tag: :ol, ..., nest: :nav)
+
+  ## Function Delegation
+
+  Pass a function capture to the `:delegate` option to forward execution to
+  another module. This is useful for generating tags using `Phoenix.HTML`.
 
       defcomp(:card_image, class: "card-img", delegate: &Phoenix.HTML.Tag.img_tag/2)
 
       card_image "path", class: "extra"
       #=> <img src="path" class="card-image extra">
 
-  ### HTML Options
+  ## HTML Options
 
-  The option is `html_opts` is forwarded onto the underlying HTML. Any keys can be
+  All `:html_opts` are forwarded onto the underlying HTML. Any keys can be
   overriden during function calls.
 
       defcomp(:alert, arity: 3, class: "alert", default_tag: :div, html_opts: [role: :alert])
 
-    #=> <div class="alert" role="alert"></div>
+      #=> <div class="alert" role="alert"></div>
 
   """
+  import Phoenix.HTML.Tag, only: [tag: 1, content_tag: 3]
+
   defmacro defcomp(name, options) do
     quote do
       if Keyword.get(unquote(options), :variants) do
@@ -173,8 +194,8 @@ defmodule ExComponent do
       end
 
       if Keyword.get(unquote(options), :block, true) do
-        def unquote(name)(do: block), do: unquote(name)([], do: block)      
-  
+        def unquote(name)(do: block), do: unquote(name)([], do: block)
+
         def unquote(name)(opts, do: block) do
           render(opts, unquote(options), do: block)
         end
@@ -191,7 +212,7 @@ defmodule ExComponent do
   end
 
   @doc """
-  Generates a component. Accepts a list of options, which is passed
+  Generates HTML content. Accepts a list of options, which is passed
   onto the underlying HTML.
 
   The `options` argument refers to the component options. See moduledoc
@@ -212,10 +233,15 @@ defmodule ExComponent do
     fun = get_function(opts, options)
 
     block =
-      if prepend = Keyword.get(options, :prepend) do
-        [prepend, block]
-      else
-        block
+      case Keyword.get(options, :prepend) do
+        nil ->
+          block
+
+        tag when is_atom(tag) ->
+          [tag(tag), block]
+
+        content ->
+          [content, block]
       end
 
     opts =
@@ -259,7 +285,7 @@ defmodule ExComponent do
 
   defp get_function(opts, options) do
     opts
-    |> Keyword.get(:delegate, Keyword.get(options, :delegate, &Phoenix.HTML.Tag.content_tag/3))
+    |> Keyword.get(:delegate, Keyword.get(options, :delegate, &content_tag/3))
   end
 
   defp put_class(opts, options) do
