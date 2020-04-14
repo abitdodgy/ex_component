@@ -169,31 +169,34 @@ defmodule ExComponent do
       #=> <div class="alert" role="alert"></div>
 
   """
-  import Phoenix.HTML.Tag, only: [tag: 1, content_tag: 3]
+  import Phoenix.HTML.Tag, only: [tag: 1, tag: 2, content_tag: 3]
 
   defmacro defcomp(name, options) do
+    block = Keyword.get(options, :block, true)
+    variants = Keyword.get(options, :variants)
+
     quote do
-      if Keyword.get(unquote(options), :variants) do
+      if unquote(variants) do
         def unquote(name)(variant, do: block) when is_atom(variant) do
-          unquote(name)([variant: variant], do: block)
+          unquote(name)([variants: variant], do: block)
         end
 
         def unquote(name)(variant, opts, do: block) when is_atom(variant) do
-          unquote(name)([variant: variant] ++ opts, do: block)
+          unquote(name)([variants: variant] ++ opts, do: block)
         end
 
-        unless Keyword.get(unquote(options), :block) == :only do
+        unless unquote(block) == :only do
           def unquote(name)(variant, content) when is_binary(content) do
-            unquote(name)([variant: variant], do: content)
+            unquote(name)([variants: variant], do: content)
           end
 
           def unquote(name)(variant, content, opts) when is_binary(content) do
-            unquote(name)([variant: variant] ++ opts, do: content)
+            unquote(name)([variants: variant] ++ opts, do: content)
           end
         end
       end
 
-      if Keyword.get(unquote(options), :block, true) do
+      if unquote(block) do
         def unquote(name)(do: block), do: unquote(name)([], do: block)
 
         def unquote(name)(opts, do: block) do
@@ -201,7 +204,7 @@ defmodule ExComponent do
         end
       end
 
-      unless Keyword.get(unquote(options), :block) == :only do
+      unless unquote(block) == :only do
         def unquote(name)(content), do: unquote(name)(content, [])
 
         def unquote(name)(content, opts) do
@@ -229,86 +232,84 @@ defmodule ExComponent do
 
   """
   def render(opts, options, do: block) do
-    tag = Keyword.get(opts, :tag, Keyword.get(options, :default_tag))
-    fun = get_function(opts, options)
-
-    block =
-      case Keyword.get(options, :prepend) do
-        nil ->
-          block
-
-        tag when is_atom(tag) ->
-          [tag(tag), block]
-
-        content ->
-          [content, block]
-      end
+    element = Keyword.fetch!(options, :render)
 
     opts =
       opts
-      |> put_variants(options)
+      |> merge_default_html_opts(options)
       |> put_class(options)
-      |> merge_default_options(options)
       |> drop_options()
 
-    fun
-    |> :erlang.fun_info()
-    |> Keyword.get(:arity)
-    |> case do
-      3 ->
-        fun.(tag, opts, do: block)
+    block =
+      options
+      |> Keyword.take([:prepend, :append])
+      |> Keyword.merge(Keyword.take(opts, [:append, :prepend]))
+      |> Enum.reduce([block], fn {sibling, tag_or_content}, acc ->
+        put_sibling(sibling, tag_or_content, acc)
+      end)
 
-      arity when arity in [1, 2] ->
-        fun.(block, opts)
-    end
+    put_content(element, block, opts)
   end
 
-  defp put_variants(opts, options) do
-    variants =
-      if variants_list = Keyword.get(options, :variants, []) do
-        opts
-        |> Keyword.take([:variant])
-        |> Keyword.values()
-        |> List.flatten()
-        |> Enum.filter(fn variant ->
-          variant in variants_list
-        end)
-      end
-
-    Keyword.put(opts, :variant, variants)
+  defp put_sibling(:prepend, content, acc) do
+    [put_sibling_content(content) | acc]
+  end
+  defp put_sibling(:append, content, acc) do
+    [acc | put_sibling_content(content)]
   end
 
-  defp merge_default_options(opts, options) do
-    opts
-    |> Keyword.merge(Keyword.get(options, :html_opts, []))
+  defp put_sibling_content(tag) when is_atom(tag), do: tag(tag)
+  defp put_sibling_content(content), do: content
+
+  defp put_content({:tag, name}, content, opts) do
+    content_tag(name, content, opts)
   end
 
-  defp get_function(opts, options) do
-    opts
-    |> Keyword.get(:delegate, Keyword.get(options, :delegate, &content_tag/3))
+  defp put_content({:delegate, fun}, content, opts) do
+    fun.(content, opts)
+  end
+
+  defp put_content({:void, name}, _content, opts) do
+    tag(name, opts)
   end
 
   defp put_class(opts, options) do
     base_class = Keyword.fetch!(options, :class)
     user_class = Keyword.get(opts, :class)
 
+    variant_list = Keyword.get(options, :variants)
+
     class_list =
       opts
-      |> Keyword.get(:variant)
-      |> Enum.map(fn value ->
-        "#{base_class}-#{value}"
-      end)
-      |> put_base_class(base_class)
+      |> put_variant_class(base_class, variant_list)
       |> put_user_class(user_class)
       |> Enum.join(" ")
 
     Keyword.put(opts, :class, class_list)
   end
 
-  defp put_base_class(opts, base_class), do: [base_class] ++ opts
+  defp put_variant_class(_opts, base_class, nil), do: [base_class]
+
+  defp put_variant_class(opts, base_class, variants) do
+    opts
+    |> Keyword.get_values(:variants)
+    |> List.flatten()
+    |> Enum.filter(fn variant ->
+      variant in variants
+    end)
+    |> Enum.map(fn value ->
+      ~s(#{base_class}-#{value})
+    end)
+    |> List.insert_at(0, base_class)
+  end
 
   defp put_user_class(opts, nil), do: opts
   defp put_user_class(opts, user_class), do: opts ++ [user_class]
+
+  defp merge_default_html_opts(opts, options) do
+    opts
+    |> Keyword.merge(Keyword.get(options, :html_opts, []))
+  end
 
   defp drop_options(opts) do
     ex_bs_component_opts = ExComponent.Config.get_config(:component_opts)

@@ -7,7 +7,7 @@ defmodule ExComponent.Config do
   """
 
   @config %{
-    component_opts: ~w[tag variant delegate dismissable]a
+    component_opts: ~w[tag variants delegate dismissable]a
   }
 
   def get_config(key), do: @config[key]

@@ -5,15 +5,15 @@ defmodule ExComponentTest do
   import Phoenix.HTML, only: [safe_to_string: 1]
 
   describe "defcomp with `arity: 2`" do
-    defmodule A do
-      defcomp(:list, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+    defmodule Default do
+      defcomp(:list, render: {:tag, :ul}, class: "list")
     end
 
     test "generates component with block" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
       result =
-        A.list do
+        Default.list do
           "Content"
         end
 
@@ -24,7 +24,7 @@ defmodule ExComponentTest do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
       result =
-        A.list class: "extra" do
+        Default.list class: "extra" do
           "Content"
         end
 
@@ -34,7 +34,7 @@ defmodule ExComponentTest do
     test "generates component with content" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
-      result = A.list("Content")
+      result = Default.list("Content")
 
       assert safe_to_string(result) == expected
     end
@@ -42,26 +42,21 @@ defmodule ExComponentTest do
     test "generates component with content and opts" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
-      result = A.list("Content", class: "extra")
+      result = Default.list("Content", class: "extra")
 
       assert safe_to_string(result) == expected
     end
   end
 
   describe "defcomp with `arity: 2` and block false" do
-    defmodule B do
-      defcomp(:list,
-        block: false,
-        class: "list",
-        default_tag: :ul,
-        variants: [:flush, :horizontal]
-      )
+    defmodule NoBlock do
+      defcomp(:list, render: {:tag, :ul}, block: false, class: "list")
     end
 
     test "generates component with content" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
-      result = B.list("Content")
+      result = NoBlock.list("Content")
 
       assert safe_to_string(result) == expected
     end
@@ -69,14 +64,14 @@ defmodule ExComponentTest do
     test "generates component with content and opts" do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
-      result = B.list("Content", class: "extra")
+      result = NoBlock.list("Content", class: "extra")
 
       assert safe_to_string(result) == expected
     end
 
     test "raises when given a block" do
       assert_raise ArgumentError, fn ->
-        B.list do
+        NoBlock.list do
           "Content"
         end
       end
@@ -84,7 +79,7 @@ defmodule ExComponentTest do
 
     test "raises when given a block and opts" do
       assert_raise ArgumentError, fn ->
-        B.list class: "extra" do
+        NoBlock.list class: "extra" do
           "Content"
         end
       end
@@ -92,20 +87,15 @@ defmodule ExComponentTest do
   end
 
   describe "defcomp with `arity: 2` and `block: :only`" do
-    defmodule C do
-      defcomp(:list,
-        block: :only,
-        class: "list",
-        default_tag: :ul,
-        variants: [:flush, :horizontal]
-      )
+    defmodule BlockOnly do
+      defcomp(:list, render: {:tag, :ul}, block: :only, class: "list")
     end
 
     test "generates component with a block" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
       result =
-        C.list do
+        BlockOnly.list do
           "Content"
         end
 
@@ -116,7 +106,7 @@ defmodule ExComponentTest do
       expected = ~s(<ul class=\"list extra\">Content</ul>)
 
       result =
-        C.list class: "extra" do
+        BlockOnly.list class: "extra" do
           "Content"
         end
 
@@ -125,27 +115,27 @@ defmodule ExComponentTest do
 
     test "raises when given content" do
       assert_raise FunctionClauseError, fn ->
-        C.list("Content")
+        BlockOnly.list("Content")
       end
     end
 
     test "raises when given content and opts" do
       assert_raise FunctionClauseError, fn ->
-        C.list("Content", class: "extra")
+        BlockOnly.list("Content", class: "extra")
       end
     end
   end
 
   describe "defcomp with `arity: 3`" do
-    defmodule D do
-      defcomp(:list, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+    defmodule ArityThreeDefault do
+      defcomp(:list, render: {:tag, :ul}, class: "list", variants: [:flush, :horizontal])
     end
 
     test "generates component with atom variant and block" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
       result =
-        D.list :flush do
+        ArityThreeDefault.list :flush do
           "Content"
         end
 
@@ -156,7 +146,7 @@ defmodule ExComponentTest do
       expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
 
       result =
-        D.list :flush, class: "extra" do
+        ArityThreeDefault.list :flush, class: "extra" do
           "Content"
         end
 
@@ -166,7 +156,7 @@ defmodule ExComponentTest do
     test "generates component with atom variant and content" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
-      result = D.list(:flush, "Content")
+      result = ArityThreeDefault.list(:flush, "Content")
 
       assert safe_to_string(result) == expected
     end
@@ -174,18 +164,18 @@ defmodule ExComponentTest do
     test "generates component with atom variant, content and opts" do
       expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
 
-      result = D.list(:flush, "Content", class: "extra")
+      result = ArityThreeDefault.list(:flush, "Content", class: "extra")
 
       assert safe_to_string(result) == expected
     end
   end
 
   describe "defcomp with `arity: 3` with `block: only`" do
-    defmodule E do
+    defmodule ArityThreeBlockOnly do
       defcomp(:list,
+        render: {:tag, :ul},
         block: :only,
         class: "list",
-        default_tag: :ul,
         variants: [:flush, :horizontal]
       )
     end
@@ -194,7 +184,7 @@ defmodule ExComponentTest do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
       result =
-        E.list :flush do
+        ArityThreeBlockOnly.list :flush do
           "Content"
         end
 
@@ -205,7 +195,7 @@ defmodule ExComponentTest do
       expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
 
       result =
-        E.list :flush, class: "extra" do
+        ArityThreeBlockOnly.list :flush, class: "extra" do
           "Content"
         end
 
@@ -214,20 +204,20 @@ defmodule ExComponentTest do
 
     test "raises when given content" do
       assert_raise FunctionClauseError, fn ->
-        E.list(:flush, "Content")
+        ArityThreeBlockOnly.list(:flush, "Content")
       end
     end
 
     test "raises when given content and opts" do
       assert_raise FunctionClauseError, fn ->
-        E.list("Content", class: "extra")
+        ArityThreeBlockOnly.list("Content", class: "extra")
       end
     end
   end
 
   describe "with tag option" do
     defmodule F do
-      defcomp(:list, class: "list", default_tag: :ul)
+      defcomp(:list, render: {:tag, :ul}, class: "list")
     end
 
     test "generates component with a custom tag" do
@@ -243,43 +233,45 @@ defmodule ExComponentTest do
   end
 
   describe "with component delegate option" do
-    defmodule G do
-      defcomp(:image, class: "image", delegate: &Phoenix.HTML.Tag.img_tag/2)
+    defmodule Delegate do
+      alias Phoenix.HTML.Tag
+      defcomp(:image, render: {:delegate, &Tag.img_tag/2}, class: "image")
     end
 
     test "delegates to the given function" do
       expected = ~s(<img class=\"image\" src="path">)
 
-      result = G.image("path")
+      result = Delegate.image("path")
 
       assert safe_to_string(result) == expected
     end
   end
 
-  describe "with function delegate option" do
-    defmodule H do
-      defcomp(:link, class: "link", delegate: &Phoenix.HTML.Link.link/2)
-    end
+  # describe "with function delegate option" do
+  #   alias Phoenix.HTML.{Tag, Link}
 
-    test "overrides delegate in component definition" do
-      expected = ~s(<img class="link" src="path">)
+  #   defmodule H do
+  #     defcomp(:link, render: {:delegate, &Link.link/2}, class: "link")
+  #   end
 
-      result = H.link("path", delegate: &Phoenix.HTML.Tag.img_tag/2)
+  #   test "overrides delegate in component definition" do
+  #     expected = ~s(<img class="link" src="path">)
+  #     result = H.link("path", tag: &Tag.img_tag/2)
 
-      assert safe_to_string(result) == expected
-    end
-  end
+  #     assert safe_to_string(result) == expected
+  #   end
+  # end
 
   describe "with variants option" do
     defmodule I do
-      defcomp(:list, class: "list", default_tag: :ul, variants: [:flush, :horizontal])
+      defcomp(:list, render: {:tag, :ul}, class: "list", variants: [:flush, :horizontal])
     end
 
     test "generates component with an atom variant option" do
       expected = ~s(<ul class=\"list list-flush\">Content</ul>)
 
       result =
-        I.list variant: :flush do
+        I.list variants: :flush do
           "Content"
         end
 
@@ -290,7 +282,7 @@ defmodule ExComponentTest do
       expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
 
       result =
-        I.list variant: [:flush, :horizontal] do
+        I.list variants: [:flush, :horizontal] do
           "Content"
         end
 
@@ -299,30 +291,30 @@ defmodule ExComponentTest do
   end
 
   describe "with prepend option" do
-    defmodule Icon do
-      defcomp(:icon, class: "icon", default_tag: :a)
-    end
+    # defmodule Icon do
+    #   defcomp(:icon, render: {:tag, :a}, class: "icon")
+    # end
 
-    defmodule PrependContent do
-      defcomp(:breadcrumb, class: "breadcrumb", default_tag: :ol, prepend: Icon.icon("some-icon"))
-    end
+    # defmodule PrependContent do
+    #   defcomp(:breadcrumb, render: {:tag, :ol}, class: "breadcrumb", prepend: Icon.icon("some-icon"))
+    # end
 
-    test "prepends given content to the component" do
-      expected = ~s(<ol class=\"breadcrumb\"><a class=\"icon\">some-icon</a>Content</ol>)
+    # test "prepends given content to the component" do
+    #   expected = ~s(<ol class=\"breadcrumb\"><a class=\"icon\">some-icon</a>Content</ol>)
 
-      result =
-        PrependContent.breadcrumb do
-          "Content"
-        end
+    #   result =
+    #     PrependContent.breadcrumb do
+    #       "Content"
+    #     end
 
-      assert safe_to_string(result) == expected
-    end
+    #   assert safe_to_string(result) == expected
+    # end
 
     defmodule PrependTag do
-      defcomp(:breadcrumb, class: "breadcrumb", prepend: :hr, default_tag: :ol)
+      defcomp(:breadcrumb, render: {:tag, :ol}, class: "breadcrumb", prepend: {:void, :hr})
     end
 
-    test "prepends given tag to the component" do
+    test "prepends the given tag to the component" do
       expected = ~s(<ol class=\"breadcrumb\"><hr>Content</ol>)
 
       result =
@@ -334,23 +326,23 @@ defmodule ExComponentTest do
     end
   end
 
-  describe "with `nest` option" do
-    defmodule K do
-      defcomp(:breadcrumb, class: "breadcrumb", nest: :nav, default_tag: :ol)
-    end
+  # describe "with `nest` option" do
+  #   defmodule K do
+  #     defcomp(:breadcrumb, class: "breadcrumb", nest: :nav, default_tag: :ol)
+  #   end
 
-    test "nests content in the given tage" do
-      expected =
-        ~s(<nav>) <>
-          ~s(<ol class=\"breadcrumb\">Content</ol>) <>
-          ~s(</nav>)
+  #   test "nests content in the given tage" do
+  #     expected =
+  #       ~s(<nav>) <>
+  #         ~s(<ol class=\"breadcrumb\">Content</ol>) <>
+  #         ~s(</nav>)
 
-      result =
-        K.breadcrumb do
-          "Content"
-        end
+  #     result =
+  #       K.breadcrumb do
+  #         "Content"
+  #       end
 
-      assert safe_to_string(result) == expected
-    end
-  end
+  #     assert safe_to_string(result) == expected
+  #   end
+  # end
 end
