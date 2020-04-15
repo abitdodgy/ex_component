@@ -9,7 +9,7 @@ defmodule ExComponentTest do
     defcomp(:list, type: {:content_tag, :ul}, class: "list", variants: [:flush, :horizontal])
   end
 
-  describe "defcomp with `:content_tag` type" do
+  describe "defcomp with `:content_tag`" do
     test "generates component with block" do
       expected = ~s(<ul class=\"list\">Content</ul>)
 
@@ -217,9 +217,23 @@ defmodule ExComponentTest do
         prepend: {&Siblings.close_button/2, "&nbsp;", class: "extra"},
         variants: [:success]
       )
+
+      defcomp(:alert_with_prepend_atom,
+        type: {:content_tag, :div},
+        class: "alert",
+        prepend: {:button, "&nbsp;"},
+        variants: [:success]
+      )
+
+      defcomp(:alert_with_prepend_atom_and_opts,
+        type: {:content_tag, :div},
+        class: "alert",
+        prepend: {:button, "&nbsp;", class: "extra"},
+        variants: [:success]
+      )
     end
 
-    test "with `:append` option" do
+    test "with `:append` option appends given tag" do
       expected = ~s(<div class=\"alert alert-success\">Alert!<hr></div>)
 
       result = Siblings.alert_with_append(:success, "Alert!")
@@ -227,7 +241,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "with `:prepend` option" do
+    test "with `:prepend` option prepends given tag" do
       expected = ~s(<div class=\"alert alert-success\"><hr>Alert!</div>)
 
       result = Siblings.alert_with_prepend(:success, "Alert!")
@@ -235,7 +249,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "with `:append` and `:prepend` option" do
+    test "with `:append` and `:prepend` options appends and prepends given tags" do
       expected = ~s(<div class=\"alert alert-success\"><hr>Alert!<hr></div>)
 
       result = Siblings.alert_with_prepend_and_append(:success, "Alert!")
@@ -243,7 +257,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "overrides `:append` option with opts" do
+    test "overrides `:append` option with function opts" do
       expected = ~s(<div class=\"alert alert-success\">Alert!<br></div>)
 
       result = Siblings.alert_with_append(:success, "Alert!", append: :br)
@@ -251,7 +265,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "overrides `:prepend` option with opts" do
+    test "overrides `:prepend` option with function opts" do
       expected = ~s(<div class=\"alert alert-success\"><br>Alert!</div>)
 
       result = Siblings.alert_with_prepend(:success, "Alert!", prepend: :br)
@@ -259,7 +273,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "overrides `:append` and `:prepend` options with opts" do
+    test "overrides `:append` and `:prepend` options with function opts" do
       expected = ~s(<div class=\"alert alert-success\"><br>Alert!<br></div>)
 
       result = Siblings.alert_with_prepend(:success, "Alert!", append: :br, prepend: :br)
@@ -267,7 +281,7 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "with `:prepend` function option" do
+    test "with `:prepend` option as a function" do
       expected =
         ~s(<div class=\"alert alert-success\"><button class=\"close\">&amp;nbsp;</button>Alert!</div>)
 
@@ -276,11 +290,29 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "with `:prepend` function option and opts" do
+    test "with `:prepend` option as a function and opts" do
       expected =
         ~s(<div class=\"alert alert-success\"><button class=\"close extra\">&amp;nbsp;</button>Alert!</div>)
 
       result = Siblings.alert_with_prepend_func_and_opts(:success, "Alert!")
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "with `:prepend` option as an atom" do
+      expected =
+        ~s(<div class=\"alert alert-success\"><button>&amp;nbsp;</button>Alert!</div>)
+
+      result = Siblings.alert_with_prepend_atom(:success, "Alert!")
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "with `:prepend` option as an atom and opts" do
+      expected =
+        ~s(<div class=\"alert alert-success\"><button class=\"extra\">&amp;nbsp;</button>Alert!</div>)
+
+      result = Siblings.alert_with_prepend_atom_and_opts(:success, "Alert!")
 
       assert safe_to_string(result) == expected
     end
@@ -351,5 +383,4 @@ defmodule ExComponentTest do
   end
 
   test "with `:delegate` opt"
-  test "with `:variants` opt"
 end
