@@ -5,22 +5,15 @@ This library provides a DSL for generating HTML components.
 ```elixir
 include ExComponent
 
-defcomp(:alert, class: "alert", default_tag: :div, variants: [:success])
+defcomp(:alert, type: {:content_tag, :div}, class: "alert", variants: [:success])
 
-alert :success, do
+alert :success do
   "Alert!"
 end
 #=> <div class="alert alert-success">Alert!</div>
 
 alert(:success, "Alert!")
 #=> <div class="alert alert-success">Alert!</div>
-
-defcomp(:list_group, class: "list-group", default_tag: :ul, variants: :flush)
-
-list_group :flush do
-  ...
-end
-#=> <ul class="list-group list-group-flush">...</ul>
 ```
 
 This lib is a work in progress and its API might change.
