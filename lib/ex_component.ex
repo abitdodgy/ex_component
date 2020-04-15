@@ -2,22 +2,21 @@ defmodule ExComponent do
   @moduledoc """
   This lib provides a DSL for generating HTML components.
 
-      defcomp(:alert, type: {:content_tag, :div}, variants: [:primary, :success], class: "list-group")
+      defcomp :alert, type: {:content_tag, :div}, variants: [:primary, :success], class: "alert"
 
       alert "Alert!"
       #=> <div class="alert">Alert!</div>      
 
       alert :primary, "Alert!"
-      #=> <div class="alert alert-primary">Alert!</div>      
+      #=> <div class="alert alert-primary">Alert!</div>
 
       alert :success, "Alert!"
-      #=> <div class="alert alert-success">Alert!</div>    
+      #=> <div class="alert alert-success">Alert!</div>
 
       alert :success, "Alert!", class: "extra"
-      #=> <div class="alert alert-success extra">Alert!</div>    
+      #=> <div class="alert alert-success extra">Alert!</div>
 
-  All generated function clauses accept a block, and a list of opts that
-  is forwarded onto the HTML.
+  Generated function clauses accept a block and a list of opts.
 
       alert do
         "Alert!"
@@ -34,21 +33,19 @@ defmodule ExComponent do
       end
       #=> <div class="alert alert-primary extra">Alert!</div>
 
-  See below for an explanation of the options.
-
   ## Options
 
     * `:class` - the component's class name. This option is required.
 
     * `:html_opts` - a list of opts to forward onto the HTML.
 
-    * `:nest` - nests the component in the given option. This option can be a function that generates another component or an atom HTML tag name.
+    * `:nest` - nests the component in the given option. The option can be a function that generates another component or an atom HTML tag name.
 
     * `:prepend` - prepends the given content to the component. Can be a function that generates another component or an atom of a self-closing HTML tag.
 
     * `:append` - appends the given content to the component. Can be a function that generates another component or an atom of a self-closing HTML tag.
 
-    * `:variants` - a list of component variants. Each variant generates a `component/3` function clause.
+    * `:variants` - a list of component variants. Each variant generates a `component/3` function clause where an atom variant name is the first argument.
 
   The `:class` is the base class of the component and is used to build
   variant classes in the form `class="{class class-variant}"`.
@@ -57,7 +54,7 @@ defmodule ExComponent do
   generates `component/3` function clauses for each variant, where the variant is the
   first argument.
 
-      defcomp(:alert, type: {:content_tag, :div}, class: "alert", variants: [:success])
+      defcomp :alert, type: {:content_tag, :div}, class: "alert", variants: [:success]
 
       alert :success, class: "extra" do
         "Alert!"
@@ -67,7 +64,7 @@ defmodule ExComponent do
   For components that can have multiple variants, use `component/2` and
   pass a list to the `:variant` option.
 
-      defcomp(:list_group, type: {:content_tag, :ul}, class: "list-group", variants: [:flush, :horizontal])
+      defcomp :list_group, type: {:content_tag, :ul}, class: "list-group", variants: [:flush, :horizontal]
 
       list_group variant: [:flush, :horizontal], class: "extra" do
         "..."
@@ -76,10 +73,11 @@ defmodule ExComponent do
 
   ## Appending And Prepending Content
 
-  Use the `:append` and `:prepend` option to prepend or append other components to the component's
+  Use the `:append` and `:prepend` options to prepend or append additional to the component's
   content. For example, an an alert that has a close button.
 
-    defcomp(:alert, type: {content_tag, :div}, class: "alert", prepend: close_button(), variants: [:primary])
+    defcomp :close_button, type: {content_tag, :button}, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
+    defcomp :alert, type: {content_tag, :div}, class: "alert", prepend: close_button(dismiss: "alert"), variants: [:primary]
 
     alert :primary do
       "Content"
@@ -156,13 +154,13 @@ defmodule ExComponent do
           def unquote(name)(do: block), do: unquote(name)([], do: block)
 
           def unquote(name)(opts, do: block) do
-            render(unquote(type), opts, unquote(options), do: block)
+            render(unquote(type), opts, unquote(options), block)
           end
 
           def unquote(name)(content), do: unquote(name)(content, [])
 
           def unquote(name)(content, opts) do
-            render(unquote(type), opts, unquote(options), do: content)
+            render(unquote(type), opts, unquote(options), content)
           end
 
         {:tag, name} ->
@@ -186,27 +184,27 @@ defmodule ExComponent do
   end
 
   @doc """
-  Generates a HTML component. Accepts a list of options, which is passed
+  Generates a HTML component. Accepts a list of options that is passed
   onto the underlying HTML.
 
-  The `options` argument refers to the component options. See moduledoc
+  The `options` argument refers to the component options. See @moduledoc
   for details.
 
-  Note that, for variants to work, they must be registered in the component.
+  Variants they must be registered in the component definition to work.
 
   ## Possible Types
 
-    + `{:tag, tag_name}` generates void HTML tags, those that do not accept content. For example, `hr`
-    + `{:content_tag, tag_name}` generates HTML tags that accept their own content
-    + `{:delegate, &function/2}` delegates processing to another function
+    + `{:tag, tag_name}` generates a void HTML tag that does not accept content (`br`, `hr`)
+    + `{:content_tag, tag_name}` generates an HTML tags that accepts content (`div`, `ul`)
+    + `{:delegate, &function/2}` delegates processing to the given function
 
   ## Options
 
     + `:tag` - overrides the given tag in the `:type` component option
-    + `:class` - additional CSS classes to append to the `class` component option
+    + `:class` - additional CSS classes to append to the `:class` component option
     + `:append` - overrides the component's `:append` option in @moduledoc
     + `:prepend` - overrides the component's `:prepend` option in @moduledoc
-    + `:variant` - an atom or a list of atom component variants
+    + `:variant` - an atom or a list of atom variants
 
   """
   def render({:tag, name}, opts, options) do
@@ -215,7 +213,7 @@ defmodule ExComponent do
     tag(tag, opts)
   end
 
-  def render({:content_tag, name}, opts, options, do: content) do
+  def render({:content_tag, name}, opts, options, content) do
     tag = Keyword.get(opts, :tag, name)
 
     content =
@@ -230,7 +228,7 @@ defmodule ExComponent do
     end
   end
 
-  def render({:delegate, fun}, opts, options, do: content) do
+  def render({:delegate, fun}, opts, options, content) do
     content =
       opts
       |> get_siblings(options)
