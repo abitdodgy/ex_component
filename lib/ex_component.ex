@@ -203,9 +203,9 @@ defmodule ExComponent do
 
   ## Options
 
-    - `:tag` Overrides the `default_tag` in component options
-    - `:class` Additional CSS classes to append to the `class` component option
-    - `:variant` An atom or a list of atom component variants
+    + `:tag` - overrides the `default_tag` in component options
+    + `:class` - additional CSS classes to append to the `class` component option
+    + `:variant` - an atom or a list of atom component variants
 
   """
   def render({:tag, name}, opts, options) do

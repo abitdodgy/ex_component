@@ -84,6 +84,8 @@ defmodule ExComponentTest do
 
       assert safe_to_string(result) == expected
     end
+
+    test "with a variant list"
   end
 
   describe "defcomp with `:tag` type" do
@@ -122,6 +124,8 @@ defmodule ExComponentTest do
 
       assert safe_to_string(result) == expected
     end
+
+    test "with a variant list"
   end
 
   describe "defcomp with `:delegate` type" do
