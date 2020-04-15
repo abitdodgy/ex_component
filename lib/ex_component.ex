@@ -95,8 +95,11 @@ defmodule ExComponent do
 
   ## Nesting Components
 
-  The `:nest` option allows you to nest a component in another or wrap its content
-  in an additional tag.
+  The `:parent` option allows you to compose components. This can be useful to nest a component
+  in another or wrap its content in an additional tag.
+
+  You can pass an atom, a function, or a tuple with either a function or an atom, and a
+  list of parent options.
 
   For example, breadcrumbs in Bootstrap are built with an `ol` tag wrapped in a `nav` tag.
 
@@ -106,9 +109,10 @@ defmodule ExComponent do
         </ol>
       </nav>
 
-  You can use the `nest: {:component, :nav}` to address this case.
+  You can use the `parent: :nav` and `parent: {:nav, [role: "nav"]}` to address this case.
 
-      defcomp :breadcrumbs, type: {:content_tag, :ol}, ..., nest: {:component, :nav}
+      defcomp :breadcrumbs, type: {:content_tag, :ol}, ..., parent: :nav
+      defcomp :breadcrumbs, type: {:content_tag, :ol}, ..., parent: {:nav, [role: "nav"]}
 
   Another example is the Bootstrap close button, whose content is wrapped in a span.
 
@@ -116,9 +120,10 @@ defmodule ExComponent do
         <span>&times;</span>
       </button>
 
-  For this case, you can use the `nest: {:content, :span}`.
+      defcomp :button, type: {:content_tag, :button}, ...
+      defcomp :close_button, type: {:content_tag, :span}, ..., parent: {&button/2, [data: [dismiss: "alert"]]}
 
-      defcomp :close_button, type: {:content_tag, :button}, ..., nest: {:content, :span}
+      close_button("&nbsp;")
 
   ## Function Delegation
 
@@ -141,7 +146,7 @@ defmodule ExComponent do
       #=> <div class="alert" role="alert">Alert!</div>
 
   """
-  import Phoenix.HTML.Tag, only: [tag: 1, tag: 2, content_tag: 3]
+  import Phoenix.HTML.Tag, only: [tag: 1, tag: 2, content_tag: 2, content_tag: 3]
 
   defmacro defcomp(name, options) do
     variants = Keyword.get(options, :variants)
@@ -211,17 +216,23 @@ defmodule ExComponent do
 
   ## Possible Types
 
-    + `{:tag, tag_name}` generates a void HTML tag that does not accept content (`br`, `hr`)
-    + `{:content_tag, tag_name}` generates an HTML tags that accepts content (`div`, `ul`)
-    + `{:delegate, &function/2}` delegates processing to the given function
+    + `{:tag, tag_name}` - generates a void HTML tag that does not accept content. For exmaple, `br` and `hr`.
+
+    + `{:content_tag, tag_name}` - generates an HTML tags that accepts content. For example, `div` and `ul`.
+
+    + `{:delegate, &function/2}` - delegates processing to the given function.
 
   ## Options
 
-    + `:tag` - overrides the given tag in the `:type` component option
-    + `:class` - additional CSS classes to append to the `:class` component option
-    + `:append` - overrides the component's `:append` option in @moduledoc
-    + `:prepend` - overrides the component's `:prepend` option in @moduledoc
-    + `:variant` - an atom or a list of atom variants
+    + `:tag` - overrides the given tag in the `:type` component option.
+
+    + `:class` - additional CSS classes to append to the `:class` component option.
+
+    + `:append` - overrides the component's `:append` option in @moduledoc.
+
+    + `:prepend` - overrides the component's `:prepend` option in @moduledoc.
+
+    + `:variant` - an atom or a list of atom variants.
 
   """
   def render({:tag, name}, opts, options) do
@@ -266,6 +277,31 @@ defmodule ExComponent do
     end
   end
 
+  defp put_siblings(siblings, content) do
+    siblings
+    |> Enum.reduce([content], fn {name, sibling}, acc ->
+      case name do
+        :prepend ->
+          [get_sibling(sibling) | acc]
+
+        :append ->
+          [acc | get_sibling(sibling)]
+      end
+    end)
+  end
+
+  defp get_sibling(tag) when is_atom(tag), do: tag(tag)
+  defp get_sibling(fun) when is_function(fun), do: fun.()
+
+  defp get_sibling({tag, opts}) when is_atom(tag) and is_list(opts), do: tag(tag, opts)
+  defp get_sibling({fun, opts}) when is_function(fun) and is_list(opts), do: fun.(opts)
+
+  defp get_sibling({tag, content}) when is_atom(tag) and is_binary(content), do: content_tag(tag, content)
+  defp get_sibling({fun, content}) when is_function(fun) and is_binary(content), do: fun.(content)
+
+  defp get_sibling({tag, content, opts}) when is_atom(tag), do: content_tag(tag, content, opts)
+  defp get_sibling({fun, content, opts}) when is_function(fun), do: fun.(content, opts)
+
   defp put_content({tag, content, opts}, options) do
     content =
       if is_function(tag) do
@@ -292,24 +328,6 @@ defmodule ExComponent do
 
     end
   end
-
-  defp put_siblings([], content), do: content
-
-  defp put_siblings(siblings, content) do
-    siblings
-    |> Enum.reduce([content], fn {sibling, tag_or_content}, acc ->
-      case sibling do
-        :prepend ->
-          [put_sibling(tag_or_content) | acc]
-
-        :append ->
-          [acc | put_sibling(tag_or_content)]
-      end
-    end)
-  end
-
-  defp put_sibling(tag) when is_atom(tag), do: tag(tag)
-  defp put_sibling(content), do: content
 
   defp process_opts(opts, options) do
     opts

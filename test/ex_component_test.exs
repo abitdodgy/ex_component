@@ -199,6 +199,20 @@ defmodule ExComponentTest do
         prepend: :hr,
         variants: [:success]
       )
+
+      defcomp(:close_button, type: {:content_tag, :button}, class: "close")
+      defcomp(:alert_with_prepend_func,
+        type: {:content_tag, :div},
+        class: "alert",
+        prepend: {&Siblings.close_button/1, "&nbsp;"},
+        variants: [:success]
+      )
+      defcomp(:alert_with_prepend_func_and_opts,
+        type: {:content_tag, :div},
+        class: "alert",
+        prepend: {&Siblings.close_button/2, "&nbsp;", class: "extra"},
+        variants: [:success]
+      )
     end
 
     test "with `:append` option" do
@@ -249,7 +263,21 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "accepts function"
+    test "with `:prepend` function option" do
+      expected = ~s(<div class=\"alert alert-success\"><button class=\"close\">&amp;nbsp;</button>Alert!</div>)
+
+      result = Siblings.alert_with_prepend_func(:success, "Alert!")
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "with `:prepend` function option and opts" do
+      expected = ~s(<div class=\"alert alert-success\"><button class=\"close extra\">&amp;nbsp;</button>Alert!</div>)
+
+      result = Siblings.alert_with_prepend_func_and_opts(:success, "Alert!")
+
+      assert safe_to_string(result) == expected
+    end
   end
 
   test "defcomp with `:tag` opt overrides default tag" do
