@@ -168,7 +168,7 @@ defmodule ExComponent do
         {:tag, name} ->
           if unquote(variants) do
             def unquote(name)(variant) when is_atom(variant) do
-              unquote(name)([variants: variant])
+              unquote(name)(variants: variant)
             end
 
             def unquote(name)(variant, opts) when is_atom(variant) do
@@ -181,7 +181,6 @@ defmodule ExComponent do
           def unquote(name)(opts) do
             render(unquote(type), opts, unquote(options))
           end
-
       end
     end
   end
@@ -203,38 +202,61 @@ defmodule ExComponent do
 
   ## Options
 
-    + `:tag` - overrides the `default_tag` in component options
+    + `:tag` - overrides the given tag in the `:type` component option
     + `:class` - additional CSS classes to append to the `class` component option
+    + `:append` - overrides the component's `:append` option in @moduledoc
+    + `:prepend` - overrides the component's `:prepend` option in @moduledoc
     + `:variant` - an atom or a list of atom component variants
 
   """
   def render({:tag, name}, opts, options) do
-    opts = put_opts(opts, options)
-    tag(name, opts)
+    tag = Keyword.get(opts, :tag, name)
+    opts = process_opts(opts, options)
+    tag(tag, opts)
   end
 
-  def render({:content_tag, name}, opts, options, do: block) do
-    opts = put_opts(opts, options)
-    block = put_siblings(options, block)
-    content_tag(name, block, opts)
+  def render({:content_tag, name}, opts, options, do: content) do
+    tag = Keyword.get(opts, :tag, name)
+
+    content =
+      opts
+      |> get_siblings(options)
+      |> put_siblings(content)
+
+    opts = process_opts(opts, options)
+
+    content_tag tag, opts do
+      content
+    end
   end
 
-  def render({:delegate, fun}, opts, options, do: block) do
-    opts = put_opts(opts, options)
-    block = put_siblings(options, block)
-    fun.(block, opts)
+  def render({:delegate, fun}, opts, options, do: content) do
+    content =
+      opts
+      |> get_siblings(options)
+      |> put_siblings(content)
+
+    opts = process_opts(opts, options)
+
+    fun.(content, opts)
   end
 
-  defp put_opts(opts, options) do
+  defp get_siblings(opts, options) do
     opts
-    |> merge_default_html_opts(options)
-    |> put_class(options)
-    |> drop_options()
+    |> Keyword.take([:append, :prepend])
+    |> case do
+      [] ->
+        Keyword.take(options, [:append, :prepend])
+
+      siblings ->
+        siblings
+    end
   end
 
-  defp put_siblings(options, content) do
-    options
-    |> Keyword.take([:prepend, :append])
+  defp put_siblings([], content), do: content
+
+  defp put_siblings(siblings, content) do
+    siblings
     |> Enum.reduce([content], fn {sibling, tag_or_content}, acc ->
       case sibling do
         :prepend ->
@@ -248,6 +270,22 @@ defmodule ExComponent do
 
   defp put_sibling(tag) when is_atom(tag), do: tag(tag)
   defp put_sibling(content), do: content
+
+  defp process_opts(opts, options) do
+    opts
+    |> merge_default_html_opts(options)
+    |> put_class(options)
+    |> drop_opts()
+  end
+
+  defp merge_default_html_opts(opts, options) do
+    default_html_opts = Keyword.get(options, :html_opts, [])
+
+    opts
+    |> Keyword.merge(default_html_opts, fn _k, opt_value, default_value ->
+      opt_value || default_value
+    end)
+  end
 
   defp put_class(opts, options) do
     base_class = Keyword.fetch!(options, :class)
@@ -282,12 +320,7 @@ defmodule ExComponent do
   defp put_user_class(opts, nil), do: opts
   defp put_user_class(opts, user_class), do: opts ++ [user_class]
 
-  defp merge_default_html_opts(opts, options) do
-    opts
-    |> Keyword.merge(Keyword.get(options, :html_opts, []))
-  end
-
-  defp drop_options(opts) do
+  defp drop_opts(opts) do
     ex_bs_component_opts = ExComponent.Config.get_config(:component_opts)
     Keyword.drop(opts, ex_bs_component_opts)
   end
