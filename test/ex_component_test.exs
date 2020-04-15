@@ -249,7 +249,6 @@ defmodule ExComponentTest do
       assert safe_to_string(result) == expected
     end
 
-    test "accepts binary"
     test "accepts function"
   end
 
@@ -261,7 +260,52 @@ defmodule ExComponentTest do
     assert safe_to_string(result) == expected
   end
 
-  test "with `:nest` option"
+  describe "defcomp with parent option" do
+    defmodule Parent do
+      import ExComponent
+
+      defcomp(:parent_tag, type: {:content_tag, :ol}, class: "breadcrumb", parent: :nav)
+      defcomp(:parent_tag_opts, type: {:content_tag, :ol}, class: "breadcrumb", parent: {:nav, [role: "nav"]})
+
+      defcomp(:nav, type: {:content_tag, :nav}, class: "nav", html_opts: [role: "nav"])
+
+      defcomp(:parent_fun, type: {:content_tag, :ol}, class: "breadcrumb", parent: &Parent.nav/2)
+      defcomp(:parent_fun_opts, type: {:content_tag, :ol}, class: "breadcrumb", parent: {&Parent.nav/2, [role: "parent"]})
+    end
+
+    test "nests the component in the given tag" do
+      expected = ~s(<nav><ol class=\"breadcrumb\">Content</ol></nav>)
+
+      result = Parent.parent_tag("Content")
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "nests the component in the given tag with opts" do
+      expected = ~s(<nav role="nav"><ol class=\"breadcrumb\">Content</ol></nav>)
+
+      result = Parent.parent_tag_opts("Content")
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "nests the component in the given function" do
+      expected = ~s(<nav class="nav" role="nav"><ol class=\"breadcrumb\">Content</ol></nav>)
+
+      result = Parent.parent_fun("Content")
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "nests the component in the given function and opts" do
+      expected = ~s(<nav class="nav" role="parent"><ol class=\"breadcrumb\">Content</ol></nav>)
+
+      result = Parent.parent_fun_opts("Content")
+
+      assert safe_to_string(result) == expected
+    end
+  end
+
   test "with `:delegate` opt"
   test "with `:variants` opt"
 end

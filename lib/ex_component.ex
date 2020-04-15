@@ -77,7 +77,7 @@ defmodule ExComponent do
   content. For example, an an alert that has a close button.
 
     defcomp :close_button, type: {content_tag, :button}, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
-    defcomp :alert, type: {content_tag, :div}, class: "alert", prepend: close_button(dismiss: "alert"), variants: [:primary]
+    defcomp :alert, type: {content_tag, :div}, class: "alert", prepend: close_button("&nbsp;"), variants: [:primary]
 
     alert :primary do
       "Content"
@@ -89,26 +89,43 @@ defmodule ExComponent do
           Content
         </div>
 
-  You can pass an atom that will be forwarded onto `Phoenix.HTML.Tag/1`.
+  You can also pass an atom that will be forwarded onto `Phoenix.HTML.Tag/1`.
 
-      defcomp(:alert, type: {content_tag, :div}, class: "alert", prepend: :hr, variants: [:primary])
+      defcomp :alert, type: {content_tag, :div}, class: "alert", prepend: :hr, variants: [:primary]
 
   ## Nesting Components
 
-  The `:nest` option allows you to nest the component in another tag.
+  The `:nest` option allows you to nest a component in another or wrap its content
+  in an additional tag.
 
-  This option is useful for wrapping components in parent tags. For example, breadcrumbs
-  in Bootstrap are built with an `ol` tag wrapped in a `nav` tag.
+  For example, breadcrumbs in Bootstrap are built with an `ol` tag wrapped in a `nav` tag.
 
-      defcomp(:breadcrumbs, type: {:content_tag, :ol}, ..., nest: nav())
-      defcomp(:breadcrumbs, type: {:content_tag, :ol}, ..., nest: :nav)
+      <nav role="nav">
+        <ol class="breadcrumbs">
+          <li class="breadcrumbs-item">...</li>
+        </ol>
+      </nav>
+
+  You can use the `nest: {:component, :nav}` to address this case.
+
+      defcomp :breadcrumbs, type: {:content_tag, :ol}, ..., nest: {:component, :nav}
+
+  Another example is the Bootstrap close button, whose content is wrapped in a span.
+
+      <button aria-label=\"Close\" class=\"close\" data-dismiss=\"alert\">
+        <span>&times;</span>
+      </button>
+
+  For this case, you can use the `nest: {:content, :span}`.
+
+      defcomp :close_button, type: {:content_tag, :button}, ..., nest: {:content, :span}
 
   ## Function Delegation
 
   Pass a function capture to the `:delegate` option to forward execution to
   another module. This is useful for generating tags using `Phoenix.HTML`.
 
-      defcomp(:card_image, type: {:delegate, &Phoenix.HTML.Tag.img_tag/2}, class: "card-img")
+      defcomp :card_image, type: {:delegate, &Phoenix.HTML.Tag.img_tag/2}, class: "card-img"
 
       card_image "path", class: "extra"
       #=> <img src="path" class="card-image extra">
@@ -118,7 +135,7 @@ defmodule ExComponent do
   All `:html_opts` are forwarded onto the underlying HTML. Any keys can be
   overriden during function calls.
 
-      defcomp(:alert, type: {:content_tag, :div}, class: "alert", html_opts: [role: :alert])
+      defcomp :alert, type: {:content_tag, :div}, class: "alert", html_opts: [role: :alert]
 
       alert "Alert!"
       #=> <div class="alert" role="alert">Alert!</div>
@@ -223,9 +240,7 @@ defmodule ExComponent do
 
     opts = process_opts(opts, options)
 
-    content_tag tag, opts do
-      content
-    end
+    put_content({tag, content, opts}, options)
   end
 
   def render({:delegate, fun}, opts, options, content) do
@@ -236,7 +251,7 @@ defmodule ExComponent do
 
     opts = process_opts(opts, options)
 
-    fun.(content, opts)
+    put_content({fun, content, opts}, options)
   end
 
   defp get_siblings(opts, options) do
@@ -248,6 +263,33 @@ defmodule ExComponent do
 
       siblings ->
         siblings
+    end
+  end
+
+  defp put_content({tag, content, opts}, options) do
+    content =
+      if is_function(tag) do
+         tag.(content, opts)
+      else
+        content_tag(tag, content, opts)
+      end
+
+    case Keyword.get(options, :parent) do
+      nil ->
+        content
+
+      parent when is_atom(parent) ->
+        content_tag(parent, content, [])
+
+      {parent, parent_opts} when is_atom(parent) ->
+        content_tag(parent, content, parent_opts)
+
+      fun when is_function(fun) ->
+        fun.(content, [])
+
+      {fun, parent_opts} when is_function(fun) ->
+        fun.(content, parent_opts)
+
     end
   end
 
