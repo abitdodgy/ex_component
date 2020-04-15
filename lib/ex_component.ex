@@ -39,7 +39,7 @@ defmodule ExComponent do
 
     * `:html_opts` - a list of opts to forward onto the HTML.
 
-    * `:nest` - nests the component in the given option. The option can be a function that generates another component or an atom HTML tag name.
+    * `:parent` - wraps the component in the given option. The option can be a function that generates another component or an atom HTML tag name.
 
     * `:prepend` - prepends the given content to the component. Can be a function that generates another component or an atom of a self-closing HTML tag.
 
@@ -73,11 +73,12 @@ defmodule ExComponent do
 
   ## Appending And Prepending Content
 
-  Use the `:append` and `:prepend` options to prepend or append additional to the component's
-  content. For example, an an alert that has a close button.
+  The `:append` and `:prepend` options are useful adding additional content the component's HTML.
+
+  For example, an an alert component that has a close button.
 
     defcomp :close_button, type: {content_tag, :button}, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
-    defcomp :alert, type: {content_tag, :div}, class: "alert", prepend: close_button("&nbsp;"), variants: [:primary]
+    defcomp :alert, type: {content_tag, :div}, class: "alert", prepend: &{&close_button/2, "&nbsp;"}, variants: [:primary]
 
     alert :primary do
       "Content"
@@ -89,9 +90,20 @@ defmodule ExComponent do
           Content
         </div>
 
-  You can also pass an atom that will be forwarded onto `Phoenix.HTML.Tag/1`.
+  You can pass an atom or an anonymous function.
 
-      defcomp :alert, type: {content_tag, :div}, class: "alert", prepend: :hr, variants: [:primary]
+      defcomp :alert, ..., prepend: :hr
+      defcomp :alert, ..., prepend: &hr/1
+
+  You can also pass a tuple with a tag or an anonymous function, content and/or options.
+
+      defcomp :alert, ..., prepend: {:hr, class: "divider"}
+
+      defcomp :alert, ..., prepend: {:button, "&nbsp;"}
+      defcomp :alert, ..., prepend: {:button, "&nbsp;", class: "close"}
+
+      defcomp :alert, ..., prepend: {&button/2, "&nbsp;"}
+      defcomp :alert, ..., prepend: {&button/3, "&nbsp;", class: "close"}
 
   ## Nesting Components
 
@@ -296,7 +308,9 @@ defmodule ExComponent do
   defp get_sibling({tag, opts}) when is_atom(tag) and is_list(opts), do: tag(tag, opts)
   defp get_sibling({fun, opts}) when is_function(fun) and is_list(opts), do: fun.(opts)
 
-  defp get_sibling({tag, content}) when is_atom(tag) and is_binary(content), do: content_tag(tag, content)
+  defp get_sibling({tag, content}) when is_atom(tag) and is_binary(content),
+    do: content_tag(tag, content)
+
   defp get_sibling({fun, content}) when is_function(fun) and is_binary(content), do: fun.(content)
 
   defp get_sibling({tag, content, opts}) when is_atom(tag), do: content_tag(tag, content, opts)
@@ -305,7 +319,7 @@ defmodule ExComponent do
   defp put_content({tag, content, opts}, options) do
     content =
       if is_function(tag) do
-         tag.(content, opts)
+        tag.(content, opts)
       else
         content_tag(tag, content, opts)
       end
@@ -325,7 +339,6 @@ defmodule ExComponent do
 
       {fun, parent_opts} when is_function(fun) ->
         fun.(content, parent_opts)
-
     end
   end
 

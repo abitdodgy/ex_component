@@ -167,9 +167,11 @@ defmodule ExComponentTest do
       result = Delegate.link("Link!", to: "#")
       assert safe_to_string(result) == expected
 
-      result = Delegate.link to: "#" do
-        "Link!"
-      end
+      result =
+        Delegate.link to: "#" do
+          "Link!"
+        end
+
       assert safe_to_string(result) == expected
     end
   end
@@ -201,12 +203,14 @@ defmodule ExComponentTest do
       )
 
       defcomp(:close_button, type: {:content_tag, :button}, class: "close")
+
       defcomp(:alert_with_prepend_func,
         type: {:content_tag, :div},
         class: "alert",
         prepend: {&Siblings.close_button/1, "&nbsp;"},
         variants: [:success]
       )
+
       defcomp(:alert_with_prepend_func_and_opts,
         type: {:content_tag, :div},
         class: "alert",
@@ -264,7 +268,8 @@ defmodule ExComponentTest do
     end
 
     test "with `:prepend` function option" do
-      expected = ~s(<div class=\"alert alert-success\"><button class=\"close\">&amp;nbsp;</button>Alert!</div>)
+      expected =
+        ~s(<div class=\"alert alert-success\"><button class=\"close\">&amp;nbsp;</button>Alert!</div>)
 
       result = Siblings.alert_with_prepend_func(:success, "Alert!")
 
@@ -272,7 +277,8 @@ defmodule ExComponentTest do
     end
 
     test "with `:prepend` function option and opts" do
-      expected = ~s(<div class=\"alert alert-success\"><button class=\"close extra\">&amp;nbsp;</button>Alert!</div>)
+      expected =
+        ~s(<div class=\"alert alert-success\"><button class=\"close extra\">&amp;nbsp;</button>Alert!</div>)
 
       result = Siblings.alert_with_prepend_func_and_opts(:success, "Alert!")
 
@@ -293,12 +299,22 @@ defmodule ExComponentTest do
       import ExComponent
 
       defcomp(:parent_tag, type: {:content_tag, :ol}, class: "breadcrumb", parent: :nav)
-      defcomp(:parent_tag_opts, type: {:content_tag, :ol}, class: "breadcrumb", parent: {:nav, [role: "nav"]})
+
+      defcomp(:parent_tag_opts,
+        type: {:content_tag, :ol},
+        class: "breadcrumb",
+        parent: {:nav, [role: "nav"]}
+      )
 
       defcomp(:nav, type: {:content_tag, :nav}, class: "nav", html_opts: [role: "nav"])
 
       defcomp(:parent_fun, type: {:content_tag, :ol}, class: "breadcrumb", parent: &Parent.nav/2)
-      defcomp(:parent_fun_opts, type: {:content_tag, :ol}, class: "breadcrumb", parent: {&Parent.nav/2, [role: "parent"]})
+
+      defcomp(:parent_fun_opts,
+        type: {:content_tag, :ol},
+        class: "breadcrumb",
+        parent: {&Parent.nav/2, [role: "parent"]}
+      )
     end
 
     test "nests the component in the given tag" do
