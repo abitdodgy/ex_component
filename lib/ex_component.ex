@@ -78,7 +78,7 @@ defmodule ExComponent do
   For example, an an alert component that has a close button.
 
     defcomp :close_button, type: {content_tag, :button}, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
-    defcomp :alert, type: {content_tag, :div}, class: "alert", prepend: &{&close_button/2, "&nbsp;"}, variants: [:primary]
+    defcomp :alert, type: {:content_tag, :div}, class: "alert", prepend: {&close_button/2, "&nbsp;"}, variants: [:primary]
 
     alert :primary do
       "Content"
