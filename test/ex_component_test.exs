@@ -300,8 +300,7 @@ defmodule ExComponentTest do
     end
 
     test "with `:prepend` option as an atom" do
-      expected =
-        ~s(<div class=\"alert alert-success\"><button>&amp;nbsp;</button>Alert!</div>)
+      expected = ~s(<div class=\"alert alert-success\"><button>&amp;nbsp;</button>Alert!</div>)
 
       result = Siblings.alert_with_prepend_atom(:success, "Alert!")
 
@@ -383,4 +382,5 @@ defmodule ExComponentTest do
   end
 
   test "with `:delegate` opt"
+  test "variants with an underscore"
 end

@@ -383,6 +383,11 @@ defmodule ExComponent do
       variant in variants
     end)
     |> Enum.map(fn value ->
+      value =
+        value
+        |> Atom.to_string()
+        |> String.replace("_", "-")
+
       ~s(#{base_class}-#{value})
     end)
     |> List.insert_at(0, base_class)
