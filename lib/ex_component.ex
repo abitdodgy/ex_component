@@ -47,7 +47,7 @@ defmodule ExComponent do
 
     * `:variants` - a list of component variants. Each variant generates a `component/3` function clause where an atom variant name is the first argument.
 
-    * `:variant_class` - the class name to use when composing variants. Defaults to the `class` option.
+    * `:variant_class_prefix` - the class prefix to use when composing variants. Defaults to the `class` option. Use `false` for no prefix.
 
   The `:class` is the base class of the component and is used to build
   variant classes in the form `class="{class class-variant}"`.
@@ -365,7 +365,20 @@ defmodule ExComponent do
     user_class = Keyword.get(opts, :class)
 
     variant_names = Keyword.get(options, :variants)
-    variant_class = Keyword.get(options, :variant_class, base_class)
+
+    variant_class =
+      options
+      |> Keyword.get(:variant_class_prefix)
+      |> case do
+        nil ->
+          base_class
+
+        false ->
+          false
+
+        class_prefix ->
+          class_prefix
+      end
 
     user_variants =
       opts
@@ -382,12 +395,14 @@ defmodule ExComponent do
     Keyword.put(opts, :class, class_list)
   end
 
-  defp append_variant_class(class_list, [], _base_class), do: class_list
+  defp append_variant_class(class_list, [], _class_prefix), do: class_list
 
-  defp append_variant_class(class_list, variants, base_class) do
+  defp append_variant_class(class_list, variants, false), do: class_list ++ variants
+
+  defp append_variant_class(class_list, variants, class_prefix) do
     class_list ++
       Enum.map(variants, fn variant ->
-        ~s(#{base_class}-#{dasherize(variant)})
+        ~s(#{class_prefix}-#{dasherize(variant)})
       end)
   end
 

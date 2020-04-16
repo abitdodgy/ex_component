@@ -6,7 +6,7 @@ defmodule ExComponentTest do
   defmodule List do
     import ExComponent
 
-    defcomp(:list, type: {:content_tag, :ul}, class: "list", variants: [:flush, :horizontal])
+    defcomp :list, type: {:content_tag, :ul}, class: "list", variants: [:flush, :horizontal]
   end
 
   describe "defcomp with `:content_tag`" do
@@ -99,7 +99,7 @@ defmodule ExComponentTest do
     defmodule Divider do
       import ExComponent
 
-      defcomp(:divider, type: {:tag, :hr}, class: "divider", variants: [:sm, :lg])
+      defcomp :divider, type: {:tag, :hr}, class: "divider", variants: [:sm, :lg]
     end
 
     test "generates component" do
@@ -149,8 +149,8 @@ defmodule ExComponentTest do
 
       alias Phoenix.HTML.{Tag, Link}
 
-      defcomp(:image, type: {:delegate, &Tag.img_tag/2}, class: "image")
-      defcomp(:link, type: {:delegate, &Link.link/2}, class: "link")
+      defcomp :image, type: {:delegate, &Tag.img_tag/2}, class: "image"
+      defcomp :link, type: {:delegate, &Link.link/2}, class: "link"
     end
 
     test "delegates to the given function" do
@@ -180,57 +180,50 @@ defmodule ExComponentTest do
     defmodule Siblings do
       import ExComponent
 
-      defcomp(:alert_with_append,
+      defcomp :alert_with_append,
         type: {:content_tag, :div},
         class: "alert",
         append: :hr,
         variants: [:success]
-      )
 
-      defcomp(:alert_with_prepend,
+      defcomp :alert_with_prepend,
         type: {:content_tag, :div},
         class: "alert",
         prepend: :hr,
         variants: [:success]
-      )
 
-      defcomp(:alert_with_prepend_and_append,
+      defcomp :alert_with_prepend_and_append,
         type: {:content_tag, :div},
         class: "alert",
         append: :hr,
         prepend: :hr,
         variants: [:success]
-      )
 
-      defcomp(:close_button, type: {:content_tag, :button}, class: "close")
+      defcomp :close_button, type: {:content_tag, :button}, class: "close"
 
-      defcomp(:alert_with_prepend_func,
+      defcomp :alert_with_prepend_func,
         type: {:content_tag, :div},
         class: "alert",
         prepend: {&Siblings.close_button/1, "&nbsp;"},
         variants: [:success]
-      )
 
-      defcomp(:alert_with_prepend_func_and_opts,
+      defcomp :alert_with_prepend_func_and_opts,
         type: {:content_tag, :div},
         class: "alert",
         prepend: {&Siblings.close_button/2, "&nbsp;", class: "extra"},
         variants: [:success]
-      )
 
-      defcomp(:alert_with_prepend_atom,
+      defcomp :alert_with_prepend_atom,
         type: {:content_tag, :div},
         class: "alert",
         prepend: {:button, "&nbsp;"},
         variants: [:success]
-      )
 
-      defcomp(:alert_with_prepend_atom_and_opts,
+      defcomp :alert_with_prepend_atom_and_opts,
         type: {:content_tag, :div},
         class: "alert",
         prepend: {:button, "&nbsp;", class: "extra"},
         variants: [:success]
-      )
     end
 
     test "with `:append` option appends given tag" do
@@ -329,23 +322,21 @@ defmodule ExComponentTest do
     defmodule Parent do
       import ExComponent
 
-      defcomp(:parent_tag, type: {:content_tag, :ol}, class: "breadcrumb", parent: :nav)
+      defcomp :parent_tag, type: {:content_tag, :ol}, class: "breadcrumb", parent: :nav
 
-      defcomp(:parent_tag_opts,
+      defcomp :parent_tag_opts,
         type: {:content_tag, :ol},
         class: "breadcrumb",
         parent: {:nav, [role: "nav"]}
-      )
 
-      defcomp(:nav, type: {:content_tag, :nav}, class: "nav", html_opts: [role: "nav"])
+      defcomp :nav, type: {:content_tag, :nav}, class: "nav", html_opts: [role: "nav"]
 
-      defcomp(:parent_fun, type: {:content_tag, :ol}, class: "breadcrumb", parent: &Parent.nav/2)
+      defcomp :parent_fun, type: {:content_tag, :ol}, class: "breadcrumb", parent: &Parent.nav/2
 
-      defcomp(:parent_fun_opts,
+      defcomp :parent_fun_opts,
         type: {:content_tag, :ol},
         class: "breadcrumb",
         parent: {&Parent.nav/2, [role: "parent"]}
-      )
     end
 
     test "nests the component in the given tag" do
