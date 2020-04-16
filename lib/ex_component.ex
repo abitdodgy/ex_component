@@ -365,7 +365,7 @@ defmodule ExComponent do
     user_class = Keyword.get(opts, :class)
 
     variant_names = Keyword.get(options, :variants)
-    variant_class = Keyword.get(options, :variant_base_class, base_class)
+    variant_class = Keyword.get(options, :variant_class, base_class)
 
     user_variants =
       opts
