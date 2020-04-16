@@ -383,4 +383,5 @@ defmodule ExComponentTest do
 
   test "with `:delegate` opt"
   test "variants with an underscore"
+  test "variants with variant_base_class"
 end

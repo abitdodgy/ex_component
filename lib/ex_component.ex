@@ -47,6 +47,8 @@ defmodule ExComponent do
 
     * `:variants` - a list of component variants. Each variant generates a `component/3` function clause where an atom variant name is the first argument.
 
+    * `:variant_class` - the class name to use when composing variants. Defaults to the `class` option.
+
   The `:class` is the base class of the component and is used to build
   variant classes in the form `class="{class class-variant}"`.
 
@@ -362,39 +364,41 @@ defmodule ExComponent do
     base_class = Keyword.fetch!(options, :class)
     user_class = Keyword.get(opts, :class)
 
-    variant_list = Keyword.get(options, :variants)
+    variant_names = Keyword.get(options, :variants)
+    variant_class = Keyword.get(options, :variant_base_class, base_class)
+
+    user_variants =
+      opts
+      |> Keyword.get_values(:variants)
+      |> List.flatten()
+      |> Enum.filter(&(&1 in variant_names))
 
     class_list =
-      opts
-      |> put_variant_class(base_class, variant_list)
-      |> put_user_class(user_class)
+      [base_class]
+      |> append_variant_class(user_variants, variant_class)
+      |> append_user_class(user_class)
       |> Enum.join(" ")
 
     Keyword.put(opts, :class, class_list)
   end
 
-  defp put_variant_class(_opts, base_class, nil), do: [base_class]
+  defp append_variant_class(class_list, [], _base_class), do: class_list
 
-  defp put_variant_class(opts, base_class, variants) do
-    opts
-    |> Keyword.get_values(:variants)
-    |> List.flatten()
-    |> Enum.filter(fn variant ->
-      variant in variants
-    end)
-    |> Enum.map(fn value ->
-      value =
-        value
-        |> Atom.to_string()
-        |> String.replace("_", "-")
-
-      ~s(#{base_class}-#{value})
-    end)
-    |> List.insert_at(0, base_class)
+  defp append_variant_class(class_list, variants, base_class) do
+    class_list ++
+      Enum.map(variants, fn variant ->
+        ~s(#{base_class}-#{dasherize(variant)})
+      end)
   end
 
-  defp put_user_class(opts, nil), do: opts
-  defp put_user_class(opts, user_class), do: opts ++ [user_class]
+  defp append_user_class(class_list, nil), do: class_list
+  defp append_user_class(class_list, user_class), do: class_list ++ [user_class]
+
+  defp dasherize(atom) do
+    atom
+    |> Atom.to_string()
+    |> String.replace("_", "-")
+  end
 
   defp drop_opts(opts) do
     ex_bs_component_opts = ExComponent.Config.get_config(:component_opts)
