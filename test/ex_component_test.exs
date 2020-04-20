@@ -1,20 +1,30 @@
 defmodule ExComponentTest do
   use ExUnit.Case
 
-  import Phoenix.HTML, only: [safe_to_string: 1]
+  import ExComponent, only: [render: 2, render: 3]
+
+  defp assert_safe(result, expected) do
+    assert Phoenix.HTML.safe_to_string(result) == expected
+  end
 
   describe "render/2" do
-    test "renders given component"
+    @options [tag: :hr, class: "divider", variants: [:lg]]
+
+    test "renders given component" do
+      assert_safe render([], @options), ~s(<hr class="divider">)
+    end
+
+    test "accepts a list of options" do
+      assert_safe render([class: "extra"], @options), ~s(<hr class="divider extra">)
+    end
   end
 
   describe "render/3" do
-    import ExComponent, only: [render: 3]
-
     @options [tag: :ul, class: "list", variants: [:horizontal]]
 
     test "renders given component" do
       result = render("Content", [], @options)
-      assert safe_to_string(result) == ~s(<ul class="list">Content</ul>)
+      assert_safe result, ~s(<ul class="list">Content</ul>)
     end
 
     test "renders given component with block" do
@@ -25,7 +35,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "accepts a list of options" do
@@ -36,7 +46,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "accepts a tag option" do
@@ -47,7 +57,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "accepts a variants option" do
@@ -58,7 +68,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "accepts custom variant_class_prefix option" do
@@ -71,7 +81,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "accepts variant_class_prefix false option" do
@@ -84,7 +94,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "accepts a prepend option" do
@@ -95,7 +105,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "accepts an append option" do
@@ -106,7 +116,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "accepts a parent option" do
@@ -117,7 +127,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
   end
 
@@ -133,7 +143,7 @@ defmodule ExComponentTest do
 
       result = Dummy.list("Content")
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "defines name/2 function clause for given component" do
@@ -141,7 +151,7 @@ defmodule ExComponentTest do
 
       result = Dummy.list("Content", class: "extra")
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "defines name/1 block function clause for given component" do
@@ -152,7 +162,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "defines name/2 block function clause for given component" do
@@ -163,7 +173,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "defines variant/2 function clause for given component" do
@@ -171,7 +181,7 @@ defmodule ExComponentTest do
 
       result = Dummy.list(:flush, "Content")
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "defines variant/3 function clause for given component" do
@@ -179,7 +189,7 @@ defmodule ExComponentTest do
 
       result = Dummy.list(:flush, "Content", class: "extra")
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "defines variant/2 block function clause for given component" do
@@ -190,7 +200,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
 
     test "defines variant/3 block function clause for given component" do
@@ -201,7 +211,7 @@ defmodule ExComponentTest do
           "Content"
         end
 
-      assert safe_to_string(result) == expected
+      assert_safe result, expected
     end
   end
 
@@ -214,22 +224,22 @@ defmodule ExComponentTest do
 
     test "defines name/1 function clause for given component" do
       result = Void.divider()
-      assert safe_to_string(result) == ~s(<hr class="divider">)
+      assert_safe result, ~s(<hr class="divider">)
     end
 
     test "defines name/2 function clause for given component" do
       result = Void.divider(class: "extra")
-      assert safe_to_string(result) == ~s(<hr class="divider extra">)
+      assert_safe result, ~s(<hr class="divider extra">)
     end
 
     test "defines variant/1 function clause for given component" do
       result = Void.divider(:lg)
-      assert safe_to_string(result) == ~s(<hr class="divider divider-lg">)
+      assert_safe result, ~s(<hr class="divider divider-lg">)
     end
 
     test "defines variant/2 function clause for given component" do
       result = Void.divider(:lg, class: "extra")
-      assert safe_to_string(result) == ~s(<hr class="divider divider-lg extra">)
+      assert_safe result, ~s(<hr class="divider divider-lg extra">)
     end
   end
 end
