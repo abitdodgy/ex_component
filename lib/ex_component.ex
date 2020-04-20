@@ -79,8 +79,7 @@ defmodule ExComponent do
 
   """
   def render(opts, defaults) do
-    defaults = merge_defaults(opts, defaults)
-    opts = merge_html_opts(opts, defaults)
+    {opts, defaults} = merge_default_opts(opts, defaults)
 
     opts
     |> put_component(defaults)
@@ -92,8 +91,7 @@ defmodule ExComponent do
   end
 
   def render(content, opts, defaults) do
-    defaults = merge_defaults(opts, defaults)
-    opts = merge_html_opts(opts, defaults)
+    {opts, defaults} = merge_default_opts(opts, defaults)
 
     [content]
     |> put_children(defaults)
@@ -106,18 +104,17 @@ defmodule ExComponent do
   def make(name, content), do: make(name, content, [])
   def make(name, content, opts) when is_list(opts), do: content_tag(name, content, opts)
 
-  defp merge_defaults(opts, defaults) do
+  defp merge_default_opts(opts, defaults) do
+    default_opts =
+      defaults
+      |> Keyword.get(:html_opts, [])
+      |> Keyword.merge(opts)
+      |> Keyword.drop(@overridable_opts)
+
     overridden_opts = Keyword.take(opts, @overridable_opts)
-    Keyword.merge(defaults, overridden_opts)
-  end
+    component_opts = Keyword.merge(defaults, overridden_opts)
 
-  defp merge_html_opts(opts, defaults) do
-    html_opts = Keyword.get(defaults, :html_opts, [])
-
-    opts
-    |> Keyword.merge(html_opts, fn _key, opt, default_opt ->
-      opt || default_opt
-    end)
+    {default_opts, component_opts}
   end
 
   defp put_children(content, opts) do
@@ -137,10 +134,7 @@ defmodule ExComponent do
   end
 
   defp put_component(opts, defaults) do
-    opts =
-      opts
-      |> put_class(defaults)
-      |> clean_opts()
+    opts = put_class(opts, defaults)
 
     defaults
     |> Keyword.get(:tag)
@@ -148,10 +142,7 @@ defmodule ExComponent do
   end
 
   defp put_component(content, opts, defaults) do
-    opts =
-      opts
-      |> put_class(defaults)
-      |> clean_opts()
+    opts = put_class(opts, defaults)
 
     defaults
     |> Keyword.get(:tag)
@@ -188,7 +179,9 @@ defmodule ExComponent do
       |> Enum.reject(&is_nil/1)
       |> Enum.join(" ")
 
-    Keyword.put(opts, :class, class)
+    opts
+    |> Keyword.delete(:variants)
+    |> Keyword.put(:class, class)
   end
 
   defp get_variant_prefix(defaults, default) do
@@ -207,10 +200,6 @@ defmodule ExComponent do
 
   defp make_variant(variant, prefix) do
     Enum.join([prefix, dasherize(variant)], "-")
-  end
-
-  defp clean_opts(opts) do
-    Keyword.drop(opts, @overridable_opts)
   end
 
   defp dasherize(atom) do

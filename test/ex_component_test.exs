@@ -3,6 +3,10 @@ defmodule ExComponentTest do
 
   import Phoenix.HTML, only: [safe_to_string: 1]
 
+  describe "render/2" do
+    test "renders given component"
+  end
+
   describe "render/3" do
     import ExComponent, only: [render: 3]
 
