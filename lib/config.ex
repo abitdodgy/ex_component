@@ -7,7 +7,7 @@ defmodule ExComponent.Config do
   """
 
   @config %{
-    component_opts: ~w[tag variants delegate append prepend]a
+    overridable_opts: ~w[append tag parent prepend variants]a
   }
 
   def get_config(key), do: @config[key]

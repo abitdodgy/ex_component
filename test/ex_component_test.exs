@@ -3,376 +3,229 @@ defmodule ExComponentTest do
 
   import Phoenix.HTML, only: [safe_to_string: 1]
 
-  defmodule List do
-    import ExComponent
+  describe "render/3" do
+    import ExComponent, only: [render: 3]
 
-    defcomp :list, type: {:content_tag, :ul}, class: "list", variants: [:flush, :horizontal]
-  end
+    @options [tag: :ul, class: "list", variants: [:horizontal]]
 
-  describe "defcomp with `:content_tag`" do
-    test "generates component with block" do
-      expected = ~s(<ul class=\"list\">Content</ul>)
+    test "renders given component" do
+      result = render("Content", [], @options)
+      assert safe_to_string(result) == ~s(<ul class="list">Content</ul>)
+    end
+
+    test "renders given component with block" do
+      expected = ~s(<ul class="list">Content</ul>)
 
       result =
-        List.list do
+        render [], @options do
           "Content"
         end
 
       assert safe_to_string(result) == expected
     end
 
-    test "generates component with block and opts" do
-      expected = ~s(<ul class=\"list extra\">Content</ul>)
+    test "accepts a list of options" do
+      expected = ~s(<ul class="list extra">Content</ul>)
 
       result =
-        List.list class: "extra" do
+        render [class: "extra"], @options do
           "Content"
         end
 
       assert safe_to_string(result) == expected
     end
 
-    test "generates component with content" do
-      expected = ~s(<ul class=\"list\">Content</ul>)
-
-      result = List.list("Content")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "generates component with content and opts" do
-      expected = ~s(<ul class=\"list extra\">Content</ul>)
-
-      result = List.list("Content", class: "extra")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "generates component with atom variant and block" do
-      expected = ~s(<ul class=\"list list-flush\">Content</ul>)
+    test "accepts a tag option" do
+      expected = ~s(<div class="list">Content</div>)
 
       result =
-        List.list :flush do
+        render [tag: :div], @options do
           "Content"
         end
 
       assert safe_to_string(result) == expected
     end
 
-    test "generates component with atom variant, opts and block" do
-      expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
+    test "accepts a variants option" do
+      expected = ~s(<ul class="list list-horizontal">Content</ul>)
 
       result =
-        List.list :flush, class: "extra" do
+        render [variants: [:horizontal]], @options do
           "Content"
         end
 
       assert safe_to_string(result) == expected
     end
 
-    test "generates component with atom variant and content" do
-      expected = ~s(<ul class=\"list list-flush\">Content</ul>)
+    test "accepts custom variant_class_prefix option" do
+      expected = ~s(<ul class="dropdown custom-dropup">Content</ul>)
 
-      result = List.list(:flush, "Content")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "generates component with atom variant, content and opts" do
-      expected = ~s(<ul class=\"list list-flush extra\">Content</ul>)
-
-      result = List.list(:flush, "Content", class: "extra")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "with a variant list" do
-      expected = ~s(<ul class=\"list list-flush list-horizontal\">Content</ul>)
-
-      result = List.list("Content", variants: [:flush, :horizontal])
-
-      assert safe_to_string(result) == expected
-    end
-  end
-
-  describe "defcomp with `:tag` type" do
-    defmodule Divider do
-      import ExComponent
-
-      defcomp :divider, type: {:tag, :hr}, class: "divider", variants: [:sm, :lg]
-    end
-
-    test "generates component" do
-      expected = ~s(<hr class=\"divider\">)
-
-      result = Divider.divider()
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "generates component with opts" do
-      expected = ~s(<hr class=\"divider extra\">)
-
-      result = Divider.divider(class: "extra")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "generates component with atom variant" do
-      expected = ~s(<hr class=\"divider divider-sm\">)
-
-      result = Divider.divider(:sm)
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "generates component with atom variant and opts" do
-      expected = ~s(<hr class=\"divider divider-sm extra\">)
-
-      result = Divider.divider(:sm, class: "extra")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "with a variant list" do
-      expected = ~s(<hr class=\"divider divider-sm divider-lg\">)
-
-      result = Divider.divider(variants: [:sm, :lg])
-
-      assert safe_to_string(result) == expected
-    end
-  end
-
-  describe "defcomp with `:delegate` type" do
-    defmodule Delegate do
-      import ExComponent
-
-      alias Phoenix.HTML.{Tag, Link}
-
-      defcomp :image, type: {:delegate, &Tag.img_tag/2}, class: "image"
-      defcomp :link, type: {:delegate, &Link.link/2}, class: "link"
-    end
-
-    test "delegates to the given function" do
-      expected = ~s(<img class=\"image\" src="path">)
-
-      result = Delegate.image("path")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "delegates to the given function that uses a block" do
-      expected = ~s(<a class="link" href=\"#\">Link!</a>)
-
-      result = Delegate.link("Link!", to: "#")
-      assert safe_to_string(result) == expected
+      options = [class: "dropdown", tag: :ul, variants: [:dropup], variant_class_prefix: "custom"]
 
       result =
-        Delegate.link to: "#" do
-          "Link!"
+        render [variants: :dropup], options do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "accepts variant_class_prefix false option" do
+      expected = ~s(<ul class="dropdown dropup">Content</ul>)
+
+      options = [class: "dropdown", tag: :ul, variants: [:dropup], variant_class_prefix: false]
+
+      result =
+        render [variants: :dropup], options do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "accepts a prepend option" do
+      expected = ~s(<ul class="list"><hr>Content</ul>)
+
+      result =
+        render [prepend: {:hr, []}], @options do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "accepts an append option" do
+      expected = ~s(<ul class="list">Content<hr></ul>)
+
+      result =
+        render [append: {:hr, []}], @options do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "accepts a parent option" do
+      expected = ~s(<div><ul class="list">Content</ul></div>)
+
+      result =
+        render [parent: {:div, []}], @options do
+          "Content"
         end
 
       assert safe_to_string(result) == expected
     end
   end
 
-  describe "defcomp/3 with sibling options" do
-    defmodule Siblings do
+  describe "defcontenttag" do
+    defmodule Dummy do
       import ExComponent
 
-      defcomp :alert_with_append,
-        type: {:content_tag, :div},
-        class: "alert",
-        append: :hr,
-        variants: [:success]
-
-      defcomp :alert_with_prepend,
-        type: {:content_tag, :div},
-        class: "alert",
-        prepend: :hr,
-        variants: [:success]
-
-      defcomp :alert_with_prepend_and_append,
-        type: {:content_tag, :div},
-        class: "alert",
-        append: :hr,
-        prepend: :hr,
-        variants: [:success]
-
-      defcomp :close_button, type: {:content_tag, :button}, class: "close"
-
-      defcomp :alert_with_prepend_func,
-        type: {:content_tag, :div},
-        class: "alert",
-        prepend: {&Siblings.close_button/1, "&nbsp;"},
-        variants: [:success]
-
-      defcomp :alert_with_prepend_func_and_opts,
-        type: {:content_tag, :div},
-        class: "alert",
-        prepend: {&Siblings.close_button/2, "&nbsp;", class: "extra"},
-        variants: [:success]
-
-      defcomp :alert_with_prepend_atom,
-        type: {:content_tag, :div},
-        class: "alert",
-        prepend: {:button, "&nbsp;"},
-        variants: [:success]
-
-      defcomp :alert_with_prepend_atom_and_opts,
-        type: {:content_tag, :div},
-        class: "alert",
-        prepend: {:button, "&nbsp;", class: "extra"},
-        variants: [:success]
+      defcontenttag(:list, tag: :ul, class: "list", variants: [:flush])
     end
 
-    test "with `:append` option appends given tag" do
-      expected = ~s(<div class=\"alert alert-success\">Alert!<hr></div>)
+    test "defines name/1 function clause for given component" do
+      expected = ~s(<ul class="list">Content</ul>)
 
-      result = Siblings.alert_with_append(:success, "Alert!")
+      result = Dummy.list("Content")
 
       assert safe_to_string(result) == expected
     end
 
-    test "with `:prepend` option prepends given tag" do
-      expected = ~s(<div class=\"alert alert-success\"><hr>Alert!</div>)
+    test "defines name/2 function clause for given component" do
+      expected = ~s(<ul class="list extra">Content</ul>)
 
-      result = Siblings.alert_with_prepend(:success, "Alert!")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "with `:append` and `:prepend` options appends and prepends given tags" do
-      expected = ~s(<div class=\"alert alert-success\"><hr>Alert!<hr></div>)
-
-      result = Siblings.alert_with_prepend_and_append(:success, "Alert!")
+      result = Dummy.list("Content", class: "extra")
 
       assert safe_to_string(result) == expected
     end
 
-    test "overrides `:append` option with function opts" do
-      expected = ~s(<div class=\"alert alert-success\">Alert!<br></div>)
+    test "defines name/1 block function clause for given component" do
+      expected = ~s(<ul class="list">Content</ul>)
 
-      result = Siblings.alert_with_append(:success, "Alert!", append: :br)
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "overrides `:prepend` option with function opts" do
-      expected = ~s(<div class=\"alert alert-success\"><br>Alert!</div>)
-
-      result = Siblings.alert_with_prepend(:success, "Alert!", prepend: :br)
+      result =
+        Dummy.list do
+          "Content"
+        end
 
       assert safe_to_string(result) == expected
     end
 
-    test "overrides `:append` and `:prepend` options with function opts" do
-      expected = ~s(<div class=\"alert alert-success\"><br>Alert!<br></div>)
+    test "defines name/2 block function clause for given component" do
+      expected = ~s(<ul class="list extra">Content</ul>)
 
-      result = Siblings.alert_with_prepend(:success, "Alert!", append: :br, prepend: :br)
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "with `:prepend` option as a function" do
-      expected =
-        ~s(<div class=\"alert alert-success\"><button class=\"close\">&amp;nbsp;</button>Alert!</div>)
-
-      result = Siblings.alert_with_prepend_func(:success, "Alert!")
+      result =
+        Dummy.list class: "extra" do
+          "Content"
+        end
 
       assert safe_to_string(result) == expected
     end
 
-    test "with `:prepend` option as a function and opts" do
-      expected =
-        ~s(<div class=\"alert alert-success\"><button class=\"close extra\">&amp;nbsp;</button>Alert!</div>)
+    test "defines variant/2 function clause for given component" do
+      expected = ~s(<ul class="list list-flush">Content</ul>)
 
-      result = Siblings.alert_with_prepend_func_and_opts(:success, "Alert!")
-
-      assert safe_to_string(result) == expected
-    end
-
-    test "with `:prepend` option as an atom" do
-      expected = ~s(<div class=\"alert alert-success\"><button>&amp;nbsp;</button>Alert!</div>)
-
-      result = Siblings.alert_with_prepend_atom(:success, "Alert!")
+      result = Dummy.list(:flush, "Content")
 
       assert safe_to_string(result) == expected
     end
 
-    test "with `:prepend` option as an atom and opts" do
-      expected =
-        ~s(<div class=\"alert alert-success\"><button class=\"extra\">&amp;nbsp;</button>Alert!</div>)
+    test "defines variant/3 function clause for given component" do
+      expected = ~s(<ul class="list list-flush extra">Content</ul>)
 
-      result = Siblings.alert_with_prepend_atom_and_opts(:success, "Alert!")
+      result = Dummy.list(:flush, "Content", class: "extra")
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "defines variant/2 block function clause for given component" do
+      expected = ~s(<ul class="list list-flush">Content</ul>)
+
+      result =
+        Dummy.list :flush do
+          "Content"
+        end
+
+      assert safe_to_string(result) == expected
+    end
+
+    test "defines variant/3 block function clause for given component" do
+      expected = ~s(<ul class="list list-flush extra">Content</ul>)
+
+      result =
+        Dummy.list :flush, class: "extra" do
+          "Content"
+        end
 
       assert safe_to_string(result) == expected
     end
   end
 
-  test "defcomp with `:tag` opt overrides default tag" do
-    expected = ~s(<ol class=\"list\">Content</ol>)
-
-    result = List.list("Content", tag: :ol)
-
-    assert safe_to_string(result) == expected
-  end
-
-  describe "defcomp with parent option" do
-    defmodule Parent do
+  describe "deftag" do
+    defmodule Void do
       import ExComponent
 
-      defcomp :parent_tag, type: {:content_tag, :ol}, class: "breadcrumb", parent: :nav
-
-      defcomp :parent_tag_opts,
-        type: {:content_tag, :ol},
-        class: "breadcrumb",
-        parent: {:nav, [role: "nav"]}
-
-      defcomp :nav, type: {:content_tag, :nav}, class: "nav", html_opts: [role: "nav"]
-
-      defcomp :parent_fun, type: {:content_tag, :ol}, class: "breadcrumb", parent: &Parent.nav/2
-
-      defcomp :parent_fun_opts,
-        type: {:content_tag, :ol},
-        class: "breadcrumb",
-        parent: {&Parent.nav/2, [role: "parent"]}
+      deftag(:divider, tag: :hr, class: "divider", variants: [:lg])
     end
 
-    test "nests the component in the given tag" do
-      expected = ~s(<nav><ol class=\"breadcrumb\">Content</ol></nav>)
-
-      result = Parent.parent_tag("Content")
-
-      assert safe_to_string(result) == expected
+    test "defines name/1 function clause for given component" do
+      result = Void.divider()
+      assert safe_to_string(result) == ~s(<hr class="divider">)
     end
 
-    test "nests the component in the given tag with opts" do
-      expected = ~s(<nav role="nav"><ol class=\"breadcrumb\">Content</ol></nav>)
-
-      result = Parent.parent_tag_opts("Content")
-
-      assert safe_to_string(result) == expected
+    test "defines name/2 function clause for given component" do
+      result = Void.divider(class: "extra")
+      assert safe_to_string(result) == ~s(<hr class="divider extra">)
     end
 
-    test "nests the component in the given function" do
-      expected = ~s(<nav class="nav" role="nav"><ol class=\"breadcrumb\">Content</ol></nav>)
-
-      result = Parent.parent_fun("Content")
-
-      assert safe_to_string(result) == expected
+    test "defines variant/1 function clause for given component" do
+      result = Void.divider(:lg)
+      assert safe_to_string(result) == ~s(<hr class="divider divider-lg">)
     end
 
-    test "nests the component in the given function and opts" do
-      expected = ~s(<nav class="nav" role="parent"><ol class=\"breadcrumb\">Content</ol></nav>)
-
-      result = Parent.parent_fun_opts("Content")
-
-      assert safe_to_string(result) == expected
+    test "defines variant/2 function clause for given component" do
+      result = Void.divider(:lg, class: "extra")
+      assert safe_to_string(result) == ~s(<hr class="divider divider-lg extra">)
     end
   end
-
-  test "with `:delegate` opt"
-  test "variants with an underscore"
-  test "variants with variant_base_class"
 end

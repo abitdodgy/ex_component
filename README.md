@@ -1,11 +1,11 @@
 # ExComponent
 
-This library provides a DSL for generating HTML components.
+DSL for generating HTML components.
 
 ```elixir
 include ExComponent
 
-defcomp(:alert, type: {:content_tag, :div}, class: "alert", variants: [:success])
+defcontenttag(:alert, tag: :div, class: "alert", variants: [:success, :danger])
 
 alert :success do
   "Alert!"
@@ -34,4 +34,3 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/ex_component](https://hexdocs.pm/ex_component).
-
