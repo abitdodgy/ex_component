@@ -108,6 +108,30 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
+    test "accepts a prepend atom option" do
+      expected = ~s(<ul class="list"><hr>Content</ul>)
+
+      result =
+        render [prepend: :hr], @options do
+          "Content"
+        end
+
+      assert_safe result, expected
+    end
+
+    test "accepts a prepend {:safe, ...} option" do
+      expected = ~s(<ul class="list"><button class="close">&amp;times;</button>Content</ul>)
+
+      close_button = Phoenix.HTML.Tag.content_tag(:button, "&times;", class: "close")
+
+      result =
+        render [prepend: close_button], @options do
+          "Content"
+        end
+
+      assert_safe result, expected
+    end
+
     test "accepts an append option" do
       expected = ~s(<ul class="list">Content<hr></ul>)
 
