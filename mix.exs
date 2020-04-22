@@ -7,7 +7,11 @@ defmodule ExComponent.MixProject do
       version: "0.1.0",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      package: package(),
+      name: "ExComponent",
+      description: "A DSL for building dynamic and reusable components in EEx for any frontend framework.",
+      source_url: "https://github.com/abitdodgy/ex_component"
     ]
   end
 
@@ -22,6 +26,13 @@ defmodule ExComponent.MixProject do
   defp deps do
     [
       {:phoenix_html, "~> 2.10"}
+    ]
+  end
+
+  defp package() do
+    [
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => "https://github.com/abitdodgy/ex_component"}
     ]
   end
 end

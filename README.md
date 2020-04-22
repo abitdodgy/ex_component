@@ -1,6 +1,6 @@
 # ExComponent
 
-DSL for generating HTML components.
+DSL for generating reusable and dynamic HTML components.
 
 ```elixir
 include ExComponent
@@ -18,10 +18,11 @@ alert(:success, "Alert!")
 
 This lib is a work in progress and its API might change.
 
+Please see internal docs for extensive usage examples.
+
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `ex_component` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `ex_component` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
