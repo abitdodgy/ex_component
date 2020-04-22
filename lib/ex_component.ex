@@ -1,6 +1,6 @@
 defmodule ExComponent do
   @moduledoc """
-  A DSL for building reusable components in EEx.
+  Easily build reusable components in EEx for any frontend framework.
 
       defcontenttag :card, tag: :div, class: "card"
 
@@ -29,22 +29,30 @@ defmodule ExComponent do
 
   ## Usage
 
-  The lib defines two macros, `deftag` and `defcontenttag`.
+  The lib defines two macros: `deftag` and `defcontenttag`.
 
-  Use `deftag` to define void components, those that do not accept their
-  own content, like `hr`.
+  The `deftag` macro defines void components, those that do not accept their
+  own content, like `hr`, while the `defcontenttag` macro defines components that accept
+  their own content, like `div`.
 
-  Use `defcontent` to define components that accept their own content, like `div`.
+  ### External Functions
+
+  The `:tag` option accepts an anonymous function. You can generate components
+  that defer execution to another function.
+
+  This is useful if you want to use `Phoenix.HTML.Link.link/2`, for example.
+
+      defcontenttag :list_group_item, tag: &Phoenix.HTML.Link.link/2, class: "list-group-item"
 
   ### `:class`
 
-  The `:class` is the base class of the component and is used to build
+  The `:class` option is the base class of the component and is used to build
   variant classes in the form `class="{class class-variant}"`.
 
   ### `:variants`
 
   The `:variants` option adds a modifier class to the component and automatically
-  generates `component/3` function clauses for each variant, where the variant is the
+  generates `component/3` clauses for each variant, where the variant is the
   first argument.
 
       defcontenttag :alert, tag: :div, class: "alert", variants: [:success]
@@ -54,34 +62,39 @@ defmodule ExComponent do
       end
       #=> <div class="alert alert-success extra">Alert!</div>
 
-  For components that can have multiple variants, use `component/2` and
+  Some components have multiple variants. You can use `component/2` and
   pass a list to the `:variant` option.
 
-      list_group variant: [:flush, :horizontal], class: "extra" do
+      list_group variants: [:flush, :horizontal], class: "extra" do
         "..."
       end
       #=> <div class="list-group list-group-flush list-group-horizontal ">...</div>
 
   ### `:variant_class_prefix`
 
-  You can override the variant base class with the `:variant_class_prefix`. This is useful for defining
-  variants that do not inherit the base class, or have a custom class.
+  Other components define variants that do not inherit their component's base
+  class, or have a custom class.
 
   For example, the `dropup` and `dropleft` variants of Bootstrap's dropdowns.
 
+  Set `variant_class_prefix: false` to define a variant without a prefix. You can also
+  provide your own custom prefix.
+
+      defcontenttag :dropdown, tag: :div, class: "dropdown", variants: [:dropup, :dropleft], variant_class_prefix: false
+
+      dropdown :dropleft do
+        ...
+      end
+      #=> <div class="dropdown dropleft ">...</div>
+
   ### `:append` and `:prepend`
 
-  The `:append` and `:prepend` options are useful adding additional content the component's HTML.
+  Use `:append` and/or `:prepend` to add additional content your component.
 
-  For example, an an alert component that has a close button.
+  For example, a Bootstrap alert that has a close button.
 
-    defcontenttag :close_button, tag: :button, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
-    defcontenttag :alert, tag: :div, class: "alert", prepend: close_button("&times;"), variants: [:primary]
-
-    # Or
-
-    defcontenttag :alert, tag: :div, class: "alert", prepend: :hr, variants: [:primary]
-    defcontenttag :alert, tag: :div, class: "alert", prepend: {:h6, "Hold Up!", class: "alert-title"}, variants: [:primary]
+    defcontenttag :close_btn, tag: :button, wrap_content: :span, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
+    defcontenttag :alert, tag: :div, class: "alert", prepend: close_btn("&times;"), variants: [:primary]
 
     alert :primary do
       "Content"
@@ -93,7 +106,10 @@ defmodule ExComponent do
           Content
         </div>
 
-  ### `:parent`
+  Both options accept an atom, or a tuple in one the forms `{:safe, iodata}`,
+  `{:tag, opts}`, `{:tag, "content"}`, and `{:tag, "content", opts}`.
+
+  ### `:parent` and `:wrap_content`
 
   The `:parent` option is useful for nesting a component in an additional tag.
 
@@ -113,17 +129,28 @@ defmodule ExComponent do
       defcomp :breadcrumbs, tag: :ol, ..., parent: :nav
       defcomp :breadcrumbs, tag: :ol, ..., parent: {:nav, [role: "nav"]}
 
+  The `:wrap_content` option works in the same way except that it wraps the content of the component.
+
+  For example, a Bootstrap button whose text is wrapped in a `span`.
+
+  ### `:html_opts`
+
+  This is a list of default HTML opts that are passed onto the underlying HTML. They can be overriden
+  during function calls.
+
   ## Options
 
     * `:class` - the component's class name. This option is required.
 
     * `:html_opts` - a list of opts to forward onto the HTML.
 
-    * `:parent` - wraps the component in the given tag. Accepts a tuple where the first element is the parent tag and the second is a list of parent options. For example, `{:div, [class: "something"]}`.
+    * `:parent` - wraps the component in the given tag. Accepts an atom, or a tuple where the first element is the parent tag and the second is a list of parent options. For example, `{:div, [class: "something"]}`.
 
-    * `:prepend` - prepends the given tag to the component's content. Accepts a tuple in the following format: `{:tag, "Content", opts_list}` or `{:tag, opts_list}`. For example, `{:hr, [class: "divider"]}` or `{:button, "Dropdown", class: "extra"}`.
+    * `:prepend` - prepends the given tag to the component's content. Accepts a tuple in the following format: `{:safe, iodata}`, `{:tag, opts}`, `{:tag, "content"}`, or `{:tag, "content", opts}`. For example, `{:hr, [class: "divider"]}` or `{:button, "Dropdown", class: "extra"}`.
 
-    * `:append` - appends the given content to the component. Accepts a tuple in the following format: `{:tag, "Content", opts_list}` or `{:tag, opts_list}`. For example, `{:hr, [class: "divider"]}` or `{:button, "Dropdown", class: "extra"}`.
+    * `:append` - appends the given content to the component. See the `:prepend` option for usage.
+
+    * `:append` - wraps the inner content of the component in the given tag. See the `:parent` option for usage.
 
     * `:variants` - a list of component variants. Each variant generates a `component/3` (`component/2` for `deftag`) function clause where an atom variant name is the first argument.
 
@@ -131,14 +158,11 @@ defmodule ExComponent do
 
 
   """
-
-  # append, prepend: :hr, {:div, "content", []}, {:div, "content", []}
-  # wrap: :div, {:div, []}
-  # type: :div, &func
-
   import Phoenix.HTML.Tag,
     only: [
+      tag: 1,
       tag: 2,
+      content_tag: 2,
       content_tag: 3
     ]
 
@@ -210,6 +234,8 @@ defmodule ExComponent do
 
     + `:prepend` - overrides the component's `:prepend` option in @moduledoc.
 
+    + `:wrap_content` - overrides the component's `:wrap_content` option in @moduledoc.
+
     + `:variants` - a list of variants.
 
   """
@@ -218,7 +244,7 @@ defmodule ExComponent do
 
     opts
     |> put_component(defaults)
-    |> put_parent(defaults)
+    |> put_content(:parent, defaults)
   end
 
   def render(opts, defaults, do: block) do
@@ -229,9 +255,10 @@ defmodule ExComponent do
     {opts, defaults} = merge_default_opts(opts, defaults)
 
     [content]
+    |> put_content(:wrap_content, defaults)
     |> put_children(defaults)
     |> put_component(opts, defaults)
-    |> put_parent(defaults)
+    |> put_content(:parent, defaults)
   end
 
   defp merge_default_opts(opts, defaults) do
@@ -248,7 +275,6 @@ defmodule ExComponent do
   end
 
   defp put_children(content, opts) do
-    # {:safe, iodata}, :div, {:div, "content"}, {:div, "content", opts}
     opts
     |> Keyword.take([:append, :prepend])
     |> Enum.reduce(content, fn {pos, child}, acc ->
@@ -258,10 +284,16 @@ defmodule ExComponent do
             child
 
           child when is_atom(child) ->
-            make(child)
+            tag(child)
 
-          child when is_tuple(child) ->
-            apply(__MODULE__, :make, Tuple.to_list(child))
+          {tag, opts} when is_list(opts) ->
+            tag(tag, opts)
+
+          {tag, content} ->
+            content_tag(tag, content)
+          
+          {tag, content, opts} ->
+            content_tag(tag, content, opts)
         end
 
       case pos do
@@ -273,13 +305,6 @@ defmodule ExComponent do
       end
     end)
   end
-
-  def make(name), do: make(name, [])
-  def make(name, opts) when is_list(opts), do: tag(name, opts)
-  def make(name, content) when is_function(name), do: apply(name, [content])
-  def make(name, content), do: make(name, content, [])
-  def make(name, content, opts) when is_function(name), do: apply(name, [content, opts])
-  def make(name, content, opts) when is_list(opts), do: content_tag(name, content, opts)
 
   defp put_component(opts, defaults) do
     opts = put_class(opts, defaults)
@@ -294,20 +319,30 @@ defmodule ExComponent do
 
     defaults
     |> Keyword.get(:tag)
-    |> make(content, opts)
+    |> case do
+      fun when is_function(fun) ->
+        apply(fun, [content, opts])
+
+      tag ->
+        content_tag(tag, content, opts)
+    end
   end
   
-  defp put_parent(content, opts) do
-    # nil, :div, &fun/1, {:div, opts}
-    case Keyword.get(opts, :parent) do
+  defp put_content(content, parent, opts) do
+    opts
+    |> Keyword.get(parent)
+    |> case do
       nil ->
         content
 
-      {name, opts} ->
-        make(name, content, opts)
+      name when is_atom(name) ->
+        content_tag(name, content)
 
-      name ->
-        make(name, content)
+      name when is_function(name) ->
+        apply(name, [content])
+
+      {name, opts} ->
+        content_tag(name, content, opts)
 
     end
   end

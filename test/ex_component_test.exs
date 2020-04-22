@@ -49,7 +49,7 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "accepts a tag atom option" do
+    test "accepts a atom tag option" do
       expected = ~s(<div class="list">Content</div>)
 
       result =
@@ -60,7 +60,7 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "accepts a tag anonymous function option" do
+    test "accepts an anonymous function tag option" do
       expected = ~s(<a class="list" href="#">Link</a>)
 
       result =
@@ -95,7 +95,7 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "accepts variant_class_prefix false option" do
+    test "accepts a `false` variant_class_prefix option" do
       expected = ~s(<ul class="dropdown dropup">Content</ul>)
 
       options = [class: "dropdown", tag: :ul, variants: [:dropup], variant_class_prefix: false]
@@ -108,22 +108,44 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "accepts a prepend option" do
+    test "accepts an atom prepend option" do
       expected = ~s(<ul class="list"><hr>Content</ul>)
 
       result =
-        render [prepend: {:hr, []}], @options do
+        render [prepend: :hr], @options do
           "Content"
         end
 
       assert_safe result, expected
     end
 
-    test "accepts an atom prepend option" do
-      expected = ~s(<ul class="list"><hr>Content</ul>)
+    test "accepts a `{:tag, opts}` prepend option" do
+      expected = ~s(<ul class="list"><hr class="extra">Content</ul>)
 
       result =
-        render [prepend: :hr], @options do
+        render [prepend: {:hr, [class: "extra"]}], @options do
+          "Content"
+        end
+
+      assert_safe result, expected
+    end
+
+    test "accepts a `{:tag, \"content\"}` prepend option" do
+      expected = ~s(<ul class="list"><button>&amp;times;</button>Content</ul>)
+
+      result =
+        render [prepend: {:button, "&times;"}], @options do
+          "Content"
+        end
+
+      assert_safe result, expected
+    end
+
+    test "accepts a `{:tag, \"content\", opts}` prepend option" do
+      expected = ~s(<ul class="list"><button class="extra">&amp;times;</button>Content</ul>)
+
+      result =
+        render [prepend: {:button, "&times;", class: "extra"}], @options do
           "Content"
         end
 
@@ -182,6 +204,17 @@ defmodule ExComponentTest do
       result =
         render [parent: &Phoenix.HTML.Tag.content_tag(:div, &1)], @options do
           "Content"
+        end
+
+      assert_safe result, expected
+    end
+
+    test "accepts a `:wrap_content` option" do
+      expected = ~s(<button class="list close"><span>&amp;times;</span></button>)
+
+      result =
+        render [tag: :button, wrap_content: :span, class: "close"], @options do
+          "&times;"
         end
 
       assert_safe result, expected
