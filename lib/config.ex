@@ -2,7 +2,7 @@ defmodule ExComponent.Config do
   @moduledoc """
   Contains configuration options.
 
-  + `component_opts` - a list of options passed to the component function call that should be dropped before being passed to the HTML.
+  + `overridable_opts` - a list of default component options that can be overridden during function calls.
 
   """
 
