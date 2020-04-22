@@ -1,6 +1,6 @@
 defmodule ExComponent do
   @moduledoc """
-  Easily build reusable components in EEx for any frontend framework.
+  A DSL for easily building dynamic, reusable components for any frontend framework in Elixir.
 
       defcontenttag :card, tag: :div, class: "card"
 
@@ -63,7 +63,7 @@ defmodule ExComponent do
       #=> <div class="alert alert-success extra">Alert!</div>
 
   Some components have multiple variants. You can use `component/2` and
-  pass a list to the `:variant` option.
+  pass a list to the `:variants` option.
 
       list_group variants: [:flush, :horizontal], class: "extra" do
         "..."
@@ -85,26 +85,25 @@ defmodule ExComponent do
       dropdown :dropleft do
         ...
       end
-      #=> <div class="dropdown dropleft ">...</div>
+      #=> <div class="dropdown dropleft">...</div>
 
   ### `:append` and `:prepend`
 
-  Use `:append` and/or `:prepend` to add additional content your component.
+  Use `:append` and/or `:prepend` to add additional content your component. For example, a Bootstrap
+  alert that has a close button.
 
-  For example, a Bootstrap alert that has a close button.
+      defcontenttag :close_btn, tag: :button, wrap_content: :span, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
+      defcontenttag :alert, tag: :div, class: "alert", prepend: close_btn("&times;"), variants: [:primary]
 
-    defcontenttag :close_btn, tag: :button, wrap_content: :span, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
-    defcontenttag :alert, tag: :div, class: "alert", prepend: close_btn("&times;"), variants: [:primary]
-
-    alert :primary do
-      "Content"
-    end
-    #=> <div class="alert alert-primary">
-          <button aria-label=\"Close\" class=\"close\" data-dismiss=\"alert\">
-            <span>&times;</span>
-          </button>
-          Content
-        </div>
+      alert :primary do
+        "Content"
+      end
+      #=> <div class="alert alert-primary">
+            <button aria-label=\"Close\" class=\"close\" data-dismiss=\"alert\">
+              <span>&times;</span>
+            </button>
+            Content
+          </div>
 
   Both options accept an atom, or a tuple in one the forms `{:safe, iodata}`,
   `{:tag, opts}`, `{:tag, "content"}`, and `{:tag, "content", opts}`.
