@@ -49,12 +49,23 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "accepts a tag option" do
+    test "accepts a tag atom option" do
       expected = ~s(<div class="list">Content</div>)
 
       result =
         render [tag: :div], @options do
           "Content"
+        end
+
+      assert_safe result, expected
+    end
+
+    test "accepts a tag anonymous function option" do
+      expected = ~s(<a class="list" href="#">Link</a>)
+
+      result =
+        render [tag: &Phoenix.HTML.Link.link/2, to: "#"], @options do
+          "Link"
         end
 
       assert_safe result, expected
@@ -108,7 +119,7 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "accepts a prepend atom option" do
+    test "accepts an atom prepend option" do
       expected = ~s(<ul class="list"><hr>Content</ul>)
 
       result =
@@ -119,7 +130,7 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "accepts a prepend {:safe, ...} option" do
+    test "accepts a {:safe, iodata} prepend option" do
       expected = ~s(<ul class="list"><button class="close">&amp;times;</button>Content</ul>)
 
       close_button = Phoenix.HTML.Tag.content_tag(:button, "&times;", class: "close")
@@ -143,11 +154,33 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "accepts a parent option" do
+    test "accepts an atom parent option" do
+      expected = ~s(<div><ul class="list">Content</ul></div>)
+
+      result =
+        render [parent: :div], @options do
+          "Content"
+        end
+
+      assert_safe result, expected
+    end
+
+    test "accepts a tuple parent option" do
       expected = ~s(<div><ul class="list">Content</ul></div>)
 
       result =
         render [parent: {:div, []}], @options do
+          "Content"
+        end
+
+      assert_safe result, expected
+    end
+
+    test "accepts an anonymous function parent option" do
+      expected = ~s(<div><ul class="list">Content</ul></div>)
+
+      result =
+        render [parent: &Phoenix.HTML.Tag.content_tag(:div, &1)], @options do
           "Content"
         end
 
@@ -160,6 +193,7 @@ defmodule ExComponentTest do
       import ExComponent
 
       defcontenttag(:list, tag: :ul, class: "list", variants: [:flush])
+      defcontenttag(:button, tag: :button, class: "list", variants: [:flush])
     end
 
     test "defines name/1 function clause for given component" do

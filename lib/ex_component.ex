@@ -81,7 +81,7 @@ defmodule ExComponent do
     # Or
 
     defcontenttag :alert, tag: :div, class: "alert", prepend: :hr, variants: [:primary]
-    defcontenttag :alert, tag: :div, class: "alert", prepend: {:h6, "Hey there!", class: "alert-title"}, variants: [:primary]
+    defcontenttag :alert, tag: :div, class: "alert", prepend: {:h6, "Hold Up!", class: "alert-title"}, variants: [:primary]
 
     alert :primary do
       "Content"
@@ -155,11 +155,11 @@ defmodule ExComponent do
         def unquote(name)(variant, content) when is_atom(variant),
           do: unquote(name)(variant, content, [])
 
-        def unquote(name)(variant, opts, do: block) when is_atom(variant) do
+        def unquote(name)(variant, opts, do: block) do
           unquote(name)(variant, block, opts)
         end
 
-        def unquote(name)(variant, content, opts) when is_atom(variant) do
+        def unquote(name)(variant, content, opts) do
           render(content, [variants: variant] ++ opts, unquote(options))
         end
       end
@@ -248,6 +248,7 @@ defmodule ExComponent do
   end
 
   defp put_children(content, opts) do
+    # {:safe, iodata}, :div, {:div, "content"}, {:div, "content", opts}
     opts
     |> Keyword.take([:append, :prepend])
     |> Enum.reduce(content, fn {pos, child}, acc ->
@@ -257,7 +258,7 @@ defmodule ExComponent do
             child
 
           child when is_atom(child) ->
-            apply(__MODULE__, :make, [child])
+            make(child)
 
           child when is_tuple(child) ->
             apply(__MODULE__, :make, Tuple.to_list(child))
@@ -275,7 +276,9 @@ defmodule ExComponent do
 
   def make(name), do: make(name, [])
   def make(name, opts) when is_list(opts), do: tag(name, opts)
+  def make(name, content) when is_function(name), do: apply(name, [content])
   def make(name, content), do: make(name, content, [])
+  def make(name, content, opts) when is_function(name), do: apply(name, [content, opts])
   def make(name, content, opts) when is_list(opts), do: content_tag(name, content, opts)
 
   defp put_component(opts, defaults) do
@@ -291,16 +294,21 @@ defmodule ExComponent do
 
     defaults
     |> Keyword.get(:tag)
-    |> content_tag(content, opts)
+    |> make(content, opts)
   end
-
+  
   defp put_parent(content, opts) do
+    # nil, :div, &fun/1, {:div, opts}
     case Keyword.get(opts, :parent) do
       nil ->
         content
 
       {name, opts} ->
-        content_tag(name, content, opts)
+        make(name, content, opts)
+
+      name ->
+        make(name, content)
+
     end
   end
 
