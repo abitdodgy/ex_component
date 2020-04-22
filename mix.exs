@@ -25,7 +25,8 @@ defmodule ExComponent.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:phoenix_html, "~> 2.10"}
+      {:phoenix_html, "~> 2.10"},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 
