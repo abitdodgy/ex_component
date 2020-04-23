@@ -197,11 +197,10 @@ defmodule ExComponent do
           #=> <tag class="#{unquote(name)} extra">...</tag>
 
         #{for variant <- unquote(variants) do
-              "#{unquote(name)}" <> ":#{variant}, do: ..."
-        ~s(    #=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>\n\n)
-
-        ~s(    #{unquote(name)} :#{variant}, class: \"extra\", do: \"...\"\n)
-        ~s(    #=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>\n\n)
+        ~s(    #{unquote(name)} :#{variant}, do: \"...\"\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>\n\n) <>
+        ~s(    #{unquote(name)} :#{variant}, class: \"extra\", do: \"...\"\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>\n\n) <>
         end}
 
       ## Options
