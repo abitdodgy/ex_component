@@ -184,6 +184,9 @@ defmodule ExComponent do
       Generates a `#{unquote(name)}/2` component. Accepts a list of options that is passed
       onto the underlying HTML.
 
+      If the component is provided the `:variants` option, generates a `#{unquote(name)}/3` function
+      where the variant is the first argument.
+
       ## Examples
 
           #{unquote(name)} do
@@ -251,6 +254,9 @@ defmodule ExComponent do
       @doc """
       Generates a `#{unquote(name)}/1` component. Accepts a list of options that is passed
       onto the underlying HTML.
+
+      If the component is provided the `:variants` option, generates a `#{unquote(name)}/3` function
+      where the variant is the first argument.
 
       ## Examples
 
