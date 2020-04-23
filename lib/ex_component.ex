@@ -180,7 +180,55 @@ defmodule ExComponent do
     variants = Keyword.get(options, :variants)
 
     quote do
-      if unquote(variants) do
+      tag = Keyword.get(unquote(options), :tag)
+
+      @doc """
+      Generates a `#{unquote(name)}/2` component. Accepts a list of options that is passed
+      onto the underlying HTML.
+
+      ## Examples
+
+          #{unquote(name)} do
+            "..."
+          end
+          #=> <#{tag} class="#{unquote(name)}">...</#{tag}>
+
+          #{unquote(name)} class: "extra" do
+            "..."
+          end
+          #=> <#{tag} class="#{unquote(name)} extra">...</#{tag}>
+
+          #{Enum.each(unquote(variants), fn variant ->
+              "#{unquote(name)} #{variant} do" <>
+                "..." <>
+              "end"
+              #=> <#{tag} class="#{unquote(name) #{variant}}">...</#{tag}>
+
+              "#{unquote(name)} #{variant}, class: \"extra\" do" <>
+                "..." <>
+              "end"
+              #=> <#{tag} class="#{unquote(name) #{variant}} extra">...</#{tag}>
+            end)}
+          
+      ## Options
+
+      Besides any opts that can be forwarded onto `PHoenix.HTML.Tag`, the following
+      options are specific to ExComponent.
+
+        + `:tag` - overrides the given tag in the `:type` component option.
+
+        + `:append` - overrides the component's `:append` option in @moduledoc.
+
+        + `:parent` - overrides the component;s `:parent` option in @moduledoc.
+
+        + `:prepend` - overrides the component's `:prepend` option in @moduledoc.
+
+        + `:wrap_content` - overrides the component's `:wrap_content` option in @moduledoc.
+
+        + `:variants` - a list of variants.
+
+      """
+      Enum.each(unquote(variants), fn variant ->
         def unquote(name)(variant, do: block) when is_atom(variant),
           do: unquote(name)(variant, block, [])
 
@@ -194,7 +242,7 @@ defmodule ExComponent do
         def unquote(name)(variant, content, opts) do
           render(content, [variants: variant] ++ opts, unquote(options))
         end
-      end
+      end)
 
       def unquote(name)(do: block), do: unquote(name)(block, [])
       def unquote(name)(content), do: unquote(name)(content, [])
@@ -207,6 +255,40 @@ defmodule ExComponent do
     variants = Keyword.get(options, :variants)
 
     quote do
+      tag = Keyword.get(unquote(options), :tag)
+
+      @doc """
+      Generates a `#{unquote(name)}/1` component. Accepts a list of options that is passed
+      onto the underlying HTML.
+
+      ## Examples
+
+          #{unquote(name)}
+          #=> <#{tag} class="#{unquote(name)}">
+
+          #{unquote(name)} class: "extra"
+          #=> <#{tag} class="#{unquote(name)} extra">>
+
+          #{Enum.each(unquote(variants), fn variant ->
+              "#{unquote(name)} :#{variant}"
+              #=> <#{tag} class="#{unquote(name) #{variant}}">
+
+              "#{unquote(name)} :#{variant}, class: \"extra\""
+              #=> <#{tag} class="#{unquote(name) #{variant}} extra">>
+            end)}
+          
+      ## Options
+
+      Besides any opts that can be forwarded onto `PHoenix.HTML.Tag`, the following
+      options are specific to ExComponent.
+
+        + `:tag` - overrides the given tag in the `:type` component option.
+
+        + `:parent` - overrides the component;s `:parent` option in @moduledoc.
+
+        + `:variants` - a list of variants.
+
+      """
       if unquote(variants) do
         def unquote(name)(variant) when is_atom(variant) do
           unquote(name)(variants: variant)
@@ -225,28 +307,6 @@ defmodule ExComponent do
     end
   end
 
-  @doc """
-  Generates a HTML component. Accepts a list of options that is passed
-  onto the underlying HTML.
-
-  ## Options
-
-  Besides any opts that can be forwarded onto `PHoenix.HTML.Tag`, the following
-  options are specific to ExComponent.
-
-    + `:tag` - overrides the given tag in the `:type` component option.
-
-    + `:append` - overrides the component's `:append` option in @moduledoc.
-
-    + `:parent` - overrides the component;s `:parent` option in @moduledoc.
-
-    + `:prepend` - overrides the component's `:prepend` option in @moduledoc.
-
-    + `:wrap_content` - overrides the component's `:wrap_content` option in @moduledoc.
-
-    + `:variants` - a list of variants.
-
-  """
   def render(opts, defaults) do
     {opts, defaults} = merge_default_opts(opts, defaults)
 
