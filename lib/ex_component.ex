@@ -180,8 +180,6 @@ defmodule ExComponent do
     variants = Keyword.get(options, :variants)
 
     quote do
-      tag = Keyword.get(unquote(options), :tag)
-
       @doc """
       Generates a `#{unquote(name)}/2` component. Accepts a list of options that is passed
       onto the underlying HTML.
@@ -191,23 +189,23 @@ defmodule ExComponent do
           #{unquote(name)} do
             "..."
           end
-          #=> <#{tag} class="#{unquote(name)}">...</#{tag}>
+          #=> <... class="#{unquote(name)}">...</...>
 
           #{unquote(name)} class: "extra" do
             "..."
           end
-          #=> <#{tag} class="#{unquote(name)} extra">...</#{tag}>
+          #=> <... class="#{unquote(name)} extra">...</...>
 
           #{Enum.each(unquote(variants), fn variant ->
               "#{unquote(name)} #{variant} do" <>
                 "..." <>
               "end"
-              #=> <#{tag} class="#{unquote(name) #{variant}}">...</#{tag}>
+              #=> <... class="#{unquote(name)} :#{variant}">...</...>
 
               "#{unquote(name)} #{variant}, class: \"extra\" do" <>
                 "..." <>
               "end"
-              #=> <#{tag} class="#{unquote(name) #{variant}} extra">...</#{tag}>
+              #=> <... class="#{unquote(name)} :#{variant} extra">...</...>
             end)}
           
       ## Options
@@ -255,8 +253,6 @@ defmodule ExComponent do
     variants = Keyword.get(options, :variants)
 
     quote do
-      tag = Keyword.get(unquote(options), :tag)
-
       @doc """
       Generates a `#{unquote(name)}/1` component. Accepts a list of options that is passed
       onto the underlying HTML.
@@ -264,17 +260,17 @@ defmodule ExComponent do
       ## Examples
 
           #{unquote(name)}
-          #=> <#{tag} class="#{unquote(name)}">
+          #=> <... class="#{unquote(name)}">
 
           #{unquote(name)} class: "extra"
-          #=> <#{tag} class="#{unquote(name)} extra">>
+          #=> <... class="#{unquote(name)} extra">>
 
           #{Enum.each(unquote(variants), fn variant ->
               "#{unquote(name)} :#{variant}"
-              #=> <#{tag} class="#{unquote(name) #{variant}}">
+              #=> <... class="#{unquote(name)} :#{variant}">
 
               "#{unquote(name)} :#{variant}, class: \"extra\""
-              #=> <#{tag} class="#{unquote(name) #{variant}} extra">>
+              #=> <... class="#{unquote(name)} :#{variant} extra">
             end)}
           
       ## Options
@@ -307,6 +303,7 @@ defmodule ExComponent do
     end
   end
 
+  @doc false
   def render(opts, defaults) do
     {opts, defaults} = merge_default_opts(opts, defaults)
 
@@ -315,10 +312,12 @@ defmodule ExComponent do
     |> put_content(:parent, defaults)
   end
 
+  @doc false
   def render(opts, defaults, do: block) do
     render(block, opts, defaults)
   end
 
+  @doc false
   def render(content, opts, defaults) do
     {opts, defaults} = merge_default_opts(opts, defaults)
 
