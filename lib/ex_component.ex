@@ -189,23 +189,19 @@ defmodule ExComponent do
           #{unquote(name)} do
             "..."
           end
-          #=> <... class="#{unquote(name)}">...</...>
+          #=> <tag class="#{unquote(name)}">...</tag>
 
           #{unquote(name)} class: "extra" do
             "..."
           end
-          #=> <... class="#{unquote(name)} extra">...</...>
+          #=> <tag class="#{unquote(name)} extra">...</tag>
 
           #{Enum.each(unquote(variants), fn variant ->
-              "#{unquote(name)} #{variant} do" <>
-                "..." <>
-              "end"
-              #=> <... class="#{unquote(name)} :#{variant}">...</...>
+              IO.puts "#{unquote(name)} :#{variant}, do: \"...\""
+              IO.puts "#=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>"
 
-              "#{unquote(name)} #{variant}, class: \"extra\" do" <>
-                "..." <>
-              "end"
-              #=> <... class="#{unquote(name)} :#{variant} extra">...</...>
+              IO.puts "#{unquote(name)} :#{variant}, class: \"extra\", do: \"...\""
+              IO.puts "#=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>"
             end)}
           
       ## Options
@@ -260,19 +256,19 @@ defmodule ExComponent do
       ## Examples
 
           #{unquote(name)}
-          #=> <... class="#{unquote(name)}">
+          #=> <tag class="#{unquote(name)}">
 
           #{unquote(name)} class: "extra"
-          #=> <... class="#{unquote(name)} extra">>
+          #=> <tag class="#{unquote(name)} extra">>
 
           #{Enum.each(unquote(variants), fn variant ->
-              "#{unquote(name)} :#{variant}"
-              #=> <... class="#{unquote(name)} :#{variant}">
+              IO.puts "#{unquote(name)} :#{variant}"
+              IO.puts "#=> <tag class=\"#{unquote(name)} :#{variant}\">"
 
-              "#{unquote(name)} :#{variant}, class: \"extra\""
-              #=> <... class="#{unquote(name)} :#{variant} extra">
+              IO.puts "#{unquote(name)} :#{variant}, class: \"extra\""
+              IO.puts "#=> <tag class=\"#{unquote(name)} :#{variant} extra\">"
             end)}
-          
+
       ## Options
 
       Besides any opts that can be forwarded onto `PHoenix.HTML.Tag`, the following
