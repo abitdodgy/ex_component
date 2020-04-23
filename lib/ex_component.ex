@@ -177,7 +177,7 @@ defmodule ExComponent do
   @overridable_opts ExComponent.Config.get_config(:overridable_opts)
 
   defmacro defcontenttag(name, options) do
-    variants = Keyword.get(options, :variants)
+    variants = Keyword.get(options, :variants, [])
 
     quote do
       @doc """
@@ -250,7 +250,7 @@ defmodule ExComponent do
   end
 
   defmacro deftag(name, options) do
-    variants = Keyword.get(options, :variants)
+    variants = Keyword.get(options, :variants, [])
 
     quote do
       @doc """
