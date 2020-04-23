@@ -196,12 +196,12 @@ defmodule ExComponent do
           end
           #=> <tag class="#{unquote(name)} extra">...</tag>
 
-        #{for variant <- unquote(variants) do
-        ~s(    #{unquote(name)} :#{variant}, do: \"...\"\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>\n\n) <>
-        ~s(    #{unquote(name)} :#{variant}, class: \"extra\", do: \"...\"\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>\n)
-        end}
+      #{for variant <- unquote(variants) do
+        ~s(    #{unquote(name)} :#{variant}, do: \"...\"\n\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} #{variant}\">...</tag>\n\n) <>
+        ~s(    #{unquote(name)} :#{variant}, class: \"extra\", do: \"...\"\n\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} #{variant} extra\">...</tag>\n\n)
+      end}
 
       ## Options
 
@@ -221,7 +221,7 @@ defmodule ExComponent do
         + `:variants` - a list of variants.
 
       """
-      Enum.each(unquote(variants), fn variant ->
+      for variant <- unquote(variants) do
         def unquote(name)(variant, do: block) when is_atom(variant),
           do: unquote(name)(variant, block, [])
 
@@ -235,7 +235,7 @@ defmodule ExComponent do
         def unquote(name)(variant, content, opts) do
           render(content, [variants: variant] ++ opts, unquote(options))
         end
-      end)
+      end
 
       def unquote(name)(do: block), do: unquote(name)(block, [])
       def unquote(name)(content), do: unquote(name)(content, [])
@@ -260,13 +260,12 @@ defmodule ExComponent do
           #{unquote(name)} class: "extra"
           #=> <tag class="#{unquote(name)} extra">>
 
-        #{for variant <- unquote(variants) do
-          ~s(#{unquote(name)} :#{variant}\n)
-          ~s(#=> <tag class=\"#{unquote(name)} :#{variant}\">\n\n)
-
-          ~s(#{unquote(name)} :#{variant}, class: \"extra\"\n)
-          ~s(#=> <tag class=\"#{unquote(name)} :#{variant} extra\">\n)
-        end}
+      #{for variant <- unquote(variants) do
+        ~s(    #{unquote(name)} :#{variant}\n\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} #{variant}\">\n\n) <>
+        ~s(    #{unquote(name)} :#{variant}, class: \"extra\""\n\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} #{variant} extra\">\n\n)
+      end}
 
       ## Options
 
@@ -280,7 +279,7 @@ defmodule ExComponent do
         + `:variants` - a list of variants.
 
       """
-      Enum.each(unquote(variants), fn variant ->
+      for variant <- unquote(variants) do
         def unquote(name)(variant) when is_atom(variant) do
           unquote(name)(variants: variant)
         end
@@ -288,7 +287,7 @@ defmodule ExComponent do
         def unquote(name)(variant, opts) when is_atom(variant) do
           unquote(name)([variants: variant] ++ opts)
         end
-      end)
+      end
 
       def unquote(name)(), do: unquote(name)([])
 
