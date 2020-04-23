@@ -200,7 +200,7 @@ defmodule ExComponent do
         ~s(    #{unquote(name)} :#{variant}, do: \"...\"\n) <>
         ~s(    #=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>\n\n) <>
         ~s(    #{unquote(name)} :#{variant}, class: \"extra\", do: \"...\"\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>\n\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>\n)
         end}
 
       ## Options
