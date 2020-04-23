@@ -1,6 +1,6 @@
 defmodule ExComponent do
   @moduledoc """
-  A DSL for easily building dynamic, reusable components for any frontend framework in Elixir.
+  A DSL for easily building dynamic, reusable components for your frontend framework in Elixir.
 
       defcontenttag :card, tag: :div, class: "card"
 
@@ -35,25 +35,27 @@ defmodule ExComponent do
   own content, like `hr`, while the `defcontenttag` macro defines components that accept
   their own content, like `div`.
 
-  ### External Functions
+  ### Function Delegation
 
-  The `:tag` option accepts an anonymous function. You can generate components
-  that defer execution to another function.
+  The `:tag` option accepts an atom and an anonymous function, which allows you to generate
+  components that defer execution to another function.
 
   This is useful if you want to use `Phoenix.HTML.Link.link/2`, for example.
 
       defcontenttag :list_group_item, tag: &Phoenix.HTML.Link.link/2, class: "list-group-item"
 
-  ### `:class`
+      list_group_item "Action", to: "#"
+      #=> <a href="#" class: "list-group-item">Action</a>
+
+  ### CSS Class
 
   The `:class` option is the base class of the component and is used to build
   variant classes in the form `class="{class class-variant}"`.
 
-  ### `:variants`
+  ### Variants
 
-  The `:variants` option adds a modifier class to the component and automatically
-  generates `component/3` clauses for each variant, where the variant is the
-  first argument.
+  The `:variants` option adds a modifier class to the component and generates `component/3`
+  clauses for each variant, where the variant is the first argument.
 
       defcontenttag :alert, tag: :div, class: "alert", variants: [:success]
 
@@ -70,14 +72,12 @@ defmodule ExComponent do
       end
       #=> <div class="list-group list-group-flush list-group-horizontal ">...</div>
 
-  ### `:variant_class_prefix`
+  ### Variant Class
 
-  Other components define variants that do not inherit their component's base
-  class, or have a custom class.
+  Some components have variants that do not inherit the component's base class, or
+  have a custom class. For example, the `dropup` and `dropleft` variants of Bootstrap's dropdowns.
 
-  For example, the `dropup` and `dropleft` variants of Bootstrap's dropdowns.
-
-  Set `variant_class_prefix: false` to define a variant without a prefix. You can also
+  Set `variant_class_prefix: false` to define a variant without a class prefix. You can also
   provide your own custom prefix.
 
       defcontenttag :dropdown, tag: :div, class: "dropdown", variants: [:dropup, :dropleft], variant_class_prefix: false
@@ -87,28 +87,28 @@ defmodule ExComponent do
       end
       #=> <div class="dropdown dropleft">...</div>
 
-  ### `:append` and `:prepend`
+  ### Appending and Prepending Content
 
   Use `:append` and/or `:prepend` to add additional content your component. For example, a Bootstrap
   alert that has a close button.
 
-      defcontenttag :close_btn, tag: :button, wrap_content: :span, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
-      defcontenttag :alert, tag: :div, class: "alert", prepend: close_btn("&times;"), variants: [:primary]
+      defcontenttag :close, tag: :button, wrap_content: :span, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
+      defcontenttag :alert, tag: :div, class: "alert", prepend: close("&times;"), variants: [:primary]
 
       alert :primary do
         "Content"
       end
-      #=> <div class="alert alert-primary">
-            <button aria-label=\"Close\" class=\"close\" data-dismiss=\"alert\">
-              <span>&times;</span>
-            </button>
-            Content
-          </div>
+      <div class="alert alert-primary">
+        <button aria-label=\"Close\" class=\"close\" data-dismiss=\"alert\">
+          <span>&times;</span>
+        </button>
+        Content
+      </div>
 
   Both options accept an atom, or a tuple in one the forms `{:safe, iodata}`,
   `{:tag, opts}`, `{:tag, "content"}`, and `{:tag, "content", opts}`.
 
-  ### `:parent` and `:wrap_content`
+  ### Nesting Components
 
   The `:parent` option is useful for nesting a component in an additional tag.
 
@@ -123,19 +123,28 @@ defmodule ExComponent do
         </ol>
       </nav>
 
-  You can use the `parent: :nav` and `parent: {:nav, [role: "nav"]}` to address this case.
+  You can use the `parent: :nav` or `parent: {:nav, [role: "nav"]}` to address this case.
 
-      defcomp :breadcrumbs, tag: :ol, ..., parent: :nav
-      defcomp :breadcrumbs, tag: :ol, ..., parent: {:nav, [role: "nav"]}
+      defcontenttag :breadcrumbs, tag: :ol, ..., parent: :nav
+      defcontenttag :breadcrumbs, tag: :ol, ..., parent: {:nav, [role: "nav"]}
 
-  The `:wrap_content` option works in the same way except that it wraps the content of the component.
+  You can also pass an anonymouse function to the parent option.
+
+      defcontenttag :breadcrumbs, tag: :ol, ..., parent: &fun/1
+
+  ### Wrapping Content
+
+  The `:wrap_content` option works exactly like the `:parent` option except that it wraps the
+  content of the component rather than the component itself.
 
   For example, a Bootstrap button whose text is wrapped in a `span`.
 
-  ### `:html_opts`
+      defcontenttag :button, tag: :button, ..., wrap_content: :span
 
-  This is a list of default HTML opts that are passed onto the underlying HTML. They can be overriden
-  during function calls.
+  ### Default HTML Options
+
+  You can pass a list of HTML options to `:html_opts`, which gets forwarded to the underlying
+  HTML. Any default options can be overriden during function calls.
 
   ## Options
 
@@ -143,13 +152,13 @@ defmodule ExComponent do
 
     * `:html_opts` - a list of opts to forward onto the HTML.
 
-    * `:parent` - wraps the component in the given tag. Accepts an atom, or a tuple where the first element is the parent tag and the second is a list of parent options. For example, `{:div, [class: "something"]}`.
+    * `:parent` - wraps the component in the given tag. Accepts an atom, a anonymous function, or a tuple where the first element is the parent tag and the second is a list of parent options. For example, `{:div, [class: "something"]}`.
 
     * `:prepend` - prepends the given tag to the component's content. Accepts a tuple in the following format: `{:safe, iodata}`, `{:tag, opts}`, `{:tag, "content"}`, or `{:tag, "content", opts}`. For example, `{:hr, [class: "divider"]}` or `{:button, "Dropdown", class: "extra"}`.
 
     * `:append` - appends the given content to the component. See the `:prepend` option for usage.
 
-    * `:append` - wraps the inner content of the component in the given tag. See the `:parent` option for usage.
+    * `:wrap_content` - wraps the inner content of the component in the given tag. See the `:parent` option for usage.
 
     * `:variants` - a list of component variants. Each variant generates a `component/3` (`component/2` for `deftag`) function clause where an atom variant name is the first argument.
 
@@ -222,7 +231,7 @@ defmodule ExComponent do
 
   ## Options
 
-  Besides any opts that can be forwarded onto PHoenix.HTML.Tag, the following
+  Besides any opts that can be forwarded onto `PHoenix.HTML.Tag`, the following
   options are specific to ExComponent.
 
     + `:tag` - overrides the given tag in the `:type` component option.
