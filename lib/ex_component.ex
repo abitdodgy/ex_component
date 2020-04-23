@@ -289,7 +289,7 @@ defmodule ExComponent do
         + `:variants` - a list of variants.
 
       """
-      if unquote(variants) do
+      Enum.each(unquote(variants), fn variant ->
         def unquote(name)(variant) when is_atom(variant) do
           unquote(name)(variants: variant)
         end
@@ -297,7 +297,7 @@ defmodule ExComponent do
         def unquote(name)(variant, opts) when is_atom(variant) do
           unquote(name)([variants: variant] ++ opts)
         end
-      end
+      end)
 
       def unquote(name)(), do: unquote(name)([])
 
