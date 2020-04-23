@@ -197,13 +197,13 @@ defmodule ExComponent do
           #=> <tag class="#{unquote(name)} extra">...</tag>
 
         #{for variant <- unquote(variants) do
-          "#{unquote(name)} :#{variant}, do: \"...\""
-          "#=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>"
+              ~s(#{unquote(name)} :#{variant}, do: \"...\")
+              ~s(#=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>)
 
-          "#{unquote(name)} :#{variant}, class: \"extra\", do: \"...\""
-          "#=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>"
+              ~s(#{unquote(name)} :#{variant}, class: \"extra\", do: \"...\")
+              ~s(#=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>)
         end}
-          
+
       ## Options
 
       Besides any opts that can be forwarded onto `PHoenix.HTML.Tag`, the following
@@ -262,11 +262,11 @@ defmodule ExComponent do
           #=> <tag class="#{unquote(name)} extra">>
 
         #{for variant <- unquote(variants) do
-          "#{unquote(name)} :#{variant}"
-          "#=> <tag class=\"#{unquote(name)} :#{variant}\">"
+          ~s(#{unquote(name)} :#{variant}\n)
+          ~s(#=> <tag class=\"#{unquote(name)} :#{variant}\">)
 
-          "#{unquote(name)} :#{variant}, class: \"extra\""
-          "#=> <tag class=\"#{unquote(name)} :#{variant} extra\">"
+          ~s(#{unquote(name)} :#{variant}, class: \"extra\"\n)
+          ~s(#=> <tag class=\"#{unquote(name)} :#{variant} extra\">)
         end}
 
       ## Options
