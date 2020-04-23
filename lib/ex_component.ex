@@ -177,7 +177,7 @@ defmodule ExComponent do
   @overridable_opts ExComponent.Config.get_config(:overridable_opts)
 
   defmacro defcontenttag(name, options) do
-    variants = Keyword.get(options, :variants, [])
+    variants = Keyword.get(options, :variants)
 
     quote do
       @doc """
@@ -196,11 +196,11 @@ defmodule ExComponent do
           end
           #=> <tag class="#{unquote(name)} extra">...</tag>
 
-      #{for variant <- unquote(variants) do
-        ~s(    #{unquote(name)} :#{variant}, do: \"...\"\n\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} #{variant}\">...</tag>\n\n) <>
-        ~s(    #{unquote(name)} :#{variant}, class: \"extra\", do: \"...\"\n\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} #{variant} extra\">...</tag>\n\n)
+      #{if unquote(variants) do
+        ~s(    #{unquote(name)} :variant, do: \"...\"\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} variant\">...</tag>\n\n) <>
+        ~s(    #{unquote(name)} :variant, class: \"extra\", do: \"...\"\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} variant extra\">...</tag>\n\n)
       end}
 
       ## Options
@@ -221,7 +221,7 @@ defmodule ExComponent do
         + `:variants` - a list of variants.
 
       """
-      for variant <- unquote(variants) do
+      if unquote(variants) do
         def unquote(name)(variant, do: block) when is_atom(variant),
           do: unquote(name)(variant, block, [])
 
@@ -245,7 +245,7 @@ defmodule ExComponent do
   end
 
   defmacro deftag(name, options) do
-    variants = Keyword.get(options, :variants, [])
+    variants = Keyword.get(options, :variants)
 
     quote do
       @doc """
@@ -260,11 +260,11 @@ defmodule ExComponent do
           #{unquote(name)} class: "extra"
           #=> <tag class="#{unquote(name)} extra">>
 
-      #{for variant <- unquote(variants) do
-        ~s(    #{unquote(name)} :#{variant}\n\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} #{variant}\">\n\n) <>
-        ~s(    #{unquote(name)} :#{variant}, class: \"extra\""\n\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} #{variant} extra\">\n\n)
+      #{if unquote(variants) do
+        ~s(    #{unquote(name)} :variant\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} variant\">\n\n) <>
+        ~s(    #{unquote(name)} :variant, class: \"extra\""\n) <>
+        ~s(    #=> <tag class=\"#{unquote(name)} variant extra\">\n\n)
       end}
 
       ## Options
@@ -279,7 +279,7 @@ defmodule ExComponent do
         + `:variants` - a list of variants.
 
       """
-      for variant <- unquote(variants) do
+      if unquote(variants) do
         def unquote(name)(variant) when is_atom(variant) do
           unquote(name)(variants: variant)
         end
