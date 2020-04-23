@@ -196,13 +196,13 @@ defmodule ExComponent do
           end
           #=> <tag class="#{unquote(name)} extra">...</tag>
 
-          #{Enum.each(unquote(variants), fn variant ->
-              IO.puts "#{unquote(name)} :#{variant}, do: \"...\""
-              IO.puts "#=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>"
+        #{for variant <- unquote(variants) do
+          "#{unquote(name)} :#{variant}, do: \"...\""
+          "#=> <tag class=\"#{unquote(name)} :#{variant}\">...</tag>"
 
-              IO.puts "#{unquote(name)} :#{variant}, class: \"extra\", do: \"...\""
-              IO.puts "#=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>"
-            end)}
+          "#{unquote(name)} :#{variant}, class: \"extra\", do: \"...\""
+          "#=> <tag class=\"#{unquote(name)} :#{variant} extra\">...</tag>"
+        end}
           
       ## Options
 
@@ -261,13 +261,13 @@ defmodule ExComponent do
           #{unquote(name)} class: "extra"
           #=> <tag class="#{unquote(name)} extra">>
 
-          #{Enum.each(unquote(variants), fn variant ->
-              IO.puts "#{unquote(name)} :#{variant}"
-              IO.puts "#=> <tag class=\"#{unquote(name)} :#{variant}\">"
+        #{for variant <- unquote(variants) do
+          "#{unquote(name)} :#{variant}"
+          "#=> <tag class=\"#{unquote(name)} :#{variant}\">"
 
-              IO.puts "#{unquote(name)} :#{variant}, class: \"extra\""
-              IO.puts "#=> <tag class=\"#{unquote(name)} :#{variant} extra\">"
-            end)}
+          "#{unquote(name)} :#{variant}, class: \"extra\""
+          "#=> <tag class=\"#{unquote(name)} :#{variant} extra\">"
+        end}
 
       ## Options
 
