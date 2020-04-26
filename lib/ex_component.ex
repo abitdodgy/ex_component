@@ -51,14 +51,13 @@ defmodule ExComponent do
 
   ## Variants
 
-  A variant generates a `name/3` function clause that takes the variant name as its first argument.
-
-  Variants are a handy way to define the same component in different contexts.
+  Variants are a handy way to define the same component in different contexts and generate
+  a `name/3` function clause that takes the variant name as its first argument.
 
       defcontenttag :button, tag: :button, class: "btn",
         variants: [
-          success: [class: "alert-success"],
-          primary: [class: "alert-primary"],
+          success: [class: "btn-success"],
+          primary: [class: "btn-primary"],
           dropdown: [
             class: "toggle-dropdown", data: [toggle: "dropdown"], aria: [haspopup: true, expanded: false]
           ]
@@ -81,7 +80,7 @@ defmodule ExComponent do
         end
         #=> <button class="btn btn-success toggle-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown!</button>
 
-  ### Variant Merge
+  ### Variant Class vs Component Class
 
   Each declared variant has a `:merge` option that defaults to `true`. When `true` this option
   appends the variant class to the component class.
@@ -99,12 +98,12 @@ defmodule ExComponent do
   the variant.
 
   While this is handy for declaring contextual variants that inherit the component's class, you may
-  want more control over this behaviour. In such cases, `:merge` can be set to false, or a custom value.
+  want more control over this behaviour. In such cases, `:merge` can be set to `false` or a custom value.
 
   The Bootstrap dropup is a great example when control over the `:merge` option can be handy.
 
-      <ul class="dropdown">...</ul>
-      <ul class="dropup">...</ul>
+      #=> <ul class="dropdown">...</ul>
+      #=> <ul class="dropup">...</ul>
 
       defcontenttag :dropdown, tag: :ul, class: "dropdown",
         variants: [
@@ -141,10 +140,10 @@ defmodule ExComponent do
             primary: [class: "primary", prefix: "alert"]
           ]
 
-  ### Variant Option
+  ### Using Variants As Options
 
-  Any variant can be declared an option by passing it `option: true`. This means you can pass the variant
-  as a key-value pair along with other HTML options.
+  Any variant can be used as an option by passing it `option: true`. This means you can use the variant
+  as a key-value pair along with other options, like `:class`, for example.
 
       defcontenttag :alert, tag: :div, class: "alert",
           variants: [
@@ -156,17 +155,19 @@ defmodule ExComponent do
       end
       #=> <div class="alert alert-primary">...</div>
 
-  Note that you can pass a boolean or a custom string to the option when making the function call.
+  You can pass a boolean or a custom string to the option when making the function call.
 
-  When you declare a variant as an option, it inherits its variant `:prefix`. See Declaring Options for more information.
+  When you enable a variant as an option, it uses the variant's `:prefix` setting.
 
-  ## Declaring Options
+  See Declaring Options for more information.
 
-  Options are similar to variants but they do not define a `name/3` clause and only affect
-  the `:class` option.
+  ## Adding Custom Options
 
-  You can pass them as key-value pairs along with other options when calling the fuction, as you
-  would for `:class` or any other option.
+  You can create and use any custom options, which are similar to variants but they do not
+  define a `name/3` clause and only affect the CSS class of the component.
+
+  Any defined options can be passed as key-value pairs along with other options when calling
+  the fuction, as you would for `:class` or any other option.
 
       col :variant, option: value, option: value, ... do
         "Col!"
