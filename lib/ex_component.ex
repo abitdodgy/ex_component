@@ -708,18 +708,15 @@ defmodule ExComponent do
     variants =
       private_opts
       |> Keyword.get(:variants, [])
-      |> Enum.map(fn {name, variant_opts} ->
-        if Keyword.get(variant_opts, :option) do
-          name
-        end
+      |> Enum.filter(fn {_name, variant_opts} ->
+        Keyword.get(variant_opts, :option)
       end)
+      |> Keyword.keys()
     
     options =
       private_opts
       |> Keyword.get(:options, [])
-      |> Enum.map(fn {name, _option_opts} ->
-        name
-      end)
+      |> Keyword.keys()
 
     opts
     |> Keyword.drop(options ++ variants)
