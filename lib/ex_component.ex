@@ -119,8 +119,8 @@ defmodule ExComponent do
 
   ### Prefix
 
-  The prefix is a shortcut for prefixing the component's class to the variant class. These three examples
-  are equivalent.
+  The prefix is a shortcut for prefixing the component's class to the variant class. It default's to
+  the component's `:class` option. The following three examples are equivalent.
 
         defcontenttag :alert,
           tag: :div,
@@ -177,15 +177,15 @@ defmodule ExComponent do
       end
       #=> <div class="col-auto col-sm-6 col-md-4">...</div>
 
-  Note that, options
+  Note that, options can:
 
-  + have their component's class prefixed
+  + have their component's class prefixed;
   
-  + can be passed `true` to use the option's name in the class rather than an explicit value.
+  + be passed `true` to use the option's name as the class rather than an explicit value.
 
-  ## A Note on Variants And Options
+  ## On Variants And Options
 
-  While combing these two options can be powerful, sometimes it's best to opt for simpliciy. The examples
+  While combining these options is powerful, sometimes it's best to go for simpliciy. The examples
   above can be declared as separate components.
 
       defcontenttag :col_auto,
@@ -208,7 +208,7 @@ defmodule ExComponent do
       end
       #=> <div class="col-sm col-md-4">...</div>
 
-  ### Appending and Prepending Content
+  ### Appending And Prepending Content
 
   You can append or prepend additional components to your component's content by using `:append` and/or `:prepend`.
 
