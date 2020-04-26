@@ -5,12 +5,10 @@ A DSL for easily building dynamic, reusable components for your frontend framewo
 ```elixir
 include ExComponent
 
-defcontenttag :alert,
-  tag: :div,
-  class: "alert",
+defcontenttag :alert, tag: :div, class: "alert",
   variants: [
-    primary: [class: "primary"],
-    success: [class: "success"]
+    primary: [class: "alert-primary"],
+    success: [class: "alert-success"]
   ]
 
 alert :primary, "Alert!"
