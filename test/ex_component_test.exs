@@ -7,149 +7,182 @@ defmodule ExComponentTest do
     assert Phoenix.HTML.safe_to_string(result) == expected
   end
 
-  describe "render/2" do
-    @options [tag: :hr, class: "divider", variants: [:lg]]
+  describe "deftag/2" do
+    defmodule Tag do
+      import ExComponent
 
-    test "renders given component" do
-      assert_safe render([], @options), ~s(<hr class="divider">)
+      deftag(:divider, tag: :hr, class: "divider", variants: [lg: [class: "lg"]])
     end
 
-    test "accepts a list of options" do
-      assert_safe render([class: "extra"], @options), ~s(<hr class="divider extra">)
+    test "defines name/0 function for the given component" do
+      assert_safe Tag.divider(), ~s(<hr class="divider">)
+    end
+
+    test "defines variant/1 function for the given component" do
+      result = Tag.divider(:lg)
+      assert_safe result, ~s(<hr class="divider divider-lg">)
+    end
+
+    test "defines a name/1 function for the given component" do
+      result = Tag.divider(class: "extra")
+      assert_safe result, ~s(<hr class="divider extra">)
+    end
+
+    test "defines a variant/2 function for the given component" do
+      result = Tag.divider(:lg, class: "extra")
+      assert_safe result, ~s(<hr class="divider divider-lg extra">)
+    end
+
+    test "accepts an atom tag option" do
+      result = Tag.divider(tag: :br)
+      assert_safe result, ~s(<br class="divider">)
     end
   end
 
-  describe "render/3" do
-    @options [tag: :ul, class: "list", variants: [:horizontal]]
+  describe "defcontenttag" do
+    defmodule ContentTag do
+      import ExComponent
 
-    test "renders given component" do
-      result = render("Content", [], @options)
-      assert_safe result, ~s(<ul class="list">Content</ul>)
+      defcontenttag(:list, tag: :ul, class: "list", variants: [flush: [class: "flush"]])
     end
 
-    test "renders given component with block" do
+    test "defines name/1 function for given component" do
+      expected = ~s(<ul class="list">Content</ul>)
+
+      result = ContentTag.list("Content")
+
+      assert_safe(result, expected)
+    end
+
+    test "defines name/1 block function for given component" do
       expected = ~s(<ul class="list">Content</ul>)
 
       result =
-        render [], @options do
+        ContentTag.list do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
-    test "accepts a list of options" do
+    test "defines name/2 function for given component" do
+      expected = ~s(<ul class="list extra">Content</ul>)
+
+      result = ContentTag.list("Content", class: "extra")
+
+      assert_safe(result, expected)
+    end
+
+    test "defines name/2 block function clause for given component" do
       expected = ~s(<ul class="list extra">Content</ul>)
 
       result =
-        render [class: "extra"], @options do
+        ContentTag.list class: "extra" do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
-    test "accepts a atom tag option" do
+    test "defines variant/2 function for given component" do
+      expected = ~s(<ul class="list list-flush">Content</ul>)
+
+      result = ContentTag.list(:flush, "Content")
+
+      assert_safe(result, expected)
+    end
+
+    test "defines variant/2 block function for given component" do
+      expected = ~s(<ul class="list list-flush">Content</ul>)
+
+      result =
+        ContentTag.list :flush do
+          "Content"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "defines variant/3 function clause for given component" do
+      expected = ~s(<ul class="list list-flush extra">Content</ul>)
+
+      result = ContentTag.list(:flush, "Content", class: "extra")
+
+      assert_safe(result, expected)
+    end
+
+    test "defines variant/3 block function clause for given component" do
+      expected = ~s(<ul class="list list-flush extra">Content</ul>)
+
+      result =
+        ContentTag.list :flush, class: "extra" do
+          "Content"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "accepts an atom tag option" do
       expected = ~s(<div class="list">Content</div>)
 
       result =
-        render [tag: :div], @options do
+        ContentTag.list tag: :div do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
     test "accepts an anonymous function tag option" do
       expected = ~s(<a class="list" href="#">Link</a>)
 
       result =
-        render [tag: &Phoenix.HTML.Link.link/2, to: "#"], @options do
+        ContentTag.list tag: &Phoenix.HTML.Link.link/2, to: "#" do
           "Link"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
+  end
 
-    test "accepts a variants option" do
-      expected = ~s(<ul class="list list-horizontal">Content</ul>)
+  describe "prepend and append options" do
+    defmodule Prepend do
+      import ExComponent
 
-      result =
-        render [variants: [:horizontal]], @options do
-          "Content"
-        end
-
-      assert_safe result, expected
-    end
-
-    test "accepts custom variant_class_prefix option" do
-      expected = ~s(<ul class="dropdown custom-dropup">Content</ul>)
-
-      options = [class: "dropdown", tag: :ul, variants: [:dropup], variant_class_prefix: "custom"]
-
-      result =
-        render [variants: :dropup], options do
-          "Content"
-        end
-
-      assert_safe result, expected
-    end
-
-    test "accepts a `false` variant_class_prefix option" do
-      expected = ~s(<ul class="dropdown dropup">Content</ul>)
-
-      options = [class: "dropdown", tag: :ul, variants: [:dropup], variant_class_prefix: false]
-
-      result =
-        render [variants: :dropup], options do
-          "Content"
-        end
-
-      assert_safe result, expected
-    end
-
-    test "accepts an atom prepend option" do
-      expected = ~s(<ul class="list"><hr>Content</ul>)
-
-      result =
-        render [prepend: :hr], @options do
-          "Content"
-        end
-
-      assert_safe result, expected
+      defcontenttag(:list, tag: :ul, class: "list")
     end
 
     test "accepts a `{:tag, opts}` prepend option" do
       expected = ~s(<ul class="list"><hr class="extra">Content</ul>)
 
       result =
-        render [prepend: {:hr, [class: "extra"]}], @options do
+        Prepend.list prepend: {:hr, [class: "extra"]} do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
     test "accepts a `{:tag, \"content\"}` prepend option" do
       expected = ~s(<ul class="list"><button>&amp;times;</button>Content</ul>)
 
       result =
-        render [prepend: {:button, "&times;"}], @options do
+        Prepend.list prepend: {:button, "&times;"} do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
     test "accepts a `{:tag, \"content\", opts}` prepend option" do
       expected = ~s(<ul class="list"><button class="extra">&amp;times;</button>Content</ul>)
 
       result =
-        render [prepend: {:button, "&times;", class: "extra"}], @options do
+        Prepend.list prepend: {:button, "&times;", class: "extra"} do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
     test "accepts a {:safe, iodata} prepend option" do
@@ -158,179 +191,177 @@ defmodule ExComponentTest do
       close_button = Phoenix.HTML.Tag.content_tag(:button, "&times;", class: "close")
 
       result =
-        render [prepend: close_button], @options do
+        Prepend.list prepend: close_button do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
     test "accepts an append option" do
       expected = ~s(<ul class="list">Content<hr></ul>)
 
       result =
-        render [append: {:hr, []}], @options do
+        Prepend.list append: {:hr, []} do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
+    end
+  end
+
+  describe "parent option" do
+    defmodule Parent do
+      import ExComponent
+
+      defcontenttag(:list, tag: :ul, class: "list")
     end
 
     test "accepts an atom parent option" do
       expected = ~s(<div><ul class="list">Content</ul></div>)
 
       result =
-        render [parent: :div], @options do
+        Parent.list parent: :div do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
     test "accepts a tuple parent option" do
       expected = ~s(<div><ul class="list">Content</ul></div>)
 
       result =
-        render [parent: {:div, []}], @options do
+        Parent.list parent: {:div, []} do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
     test "accepts an anonymous function parent option" do
       expected = ~s(<div><ul class="list">Content</ul></div>)
 
       result =
-        render [parent: &Phoenix.HTML.Tag.content_tag(:div, &1)], @options do
+        Parent.list parent: &Phoenix.HTML.Tag.content_tag(:div, &1) do
           "Content"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
 
     test "accepts a `:wrap_content` option" do
       expected = ~s(<button class="list close"><span>&amp;times;</span></button>)
 
       result =
-        render [tag: :button, wrap_content: :span, class: "close"], @options do
+        Parent.list tag: :button, wrap_content: :span, class: "close" do
           "&times;"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
     end
   end
 
-  describe "defcontenttag" do
-    defmodule Dummy do
+  describe "variant option" do
+    defmodule Alert do
       import ExComponent
 
-      defcontenttag(:list, tag: :ul, class: "list", variants: [:flush])
-      defcontenttag(:button, tag: :button, class: "list", variants: [:flush])
+      defcontenttag(:alert,
+        tag: :div,
+        class: "alert",
+        variants: [
+          primary: [class: "primary"],
+          success: [class: "success"],
+          another: [class: "another", merge: false],
+          onemore: [class: "onemore", prefix: false],
+          andmore: [class: "andmore", prefix: "custom"]
+        ]
+      )
     end
 
-    test "defines name/1 function clause for given component" do
-      expected = ~s(<ul class="list">Content</ul>)
-
-      result = Dummy.list("Content")
-
-      assert_safe result, expected
-    end
-
-    test "defines name/2 function clause for given component" do
-      expected = ~s(<ul class="list extra">Content</ul>)
-
-      result = Dummy.list("Content", class: "extra")
-
-      assert_safe result, expected
-    end
-
-    test "defines name/1 block function clause for given component" do
-      expected = ~s(<ul class="list">Content</ul>)
+    test "when atom" do
+      expected = ~s(<div class="alert alert-success">Alert!</div>)
 
       result =
-        Dummy.list do
-          "Content"
+        Alert.alert :success do
+          "Alert!"
         end
 
       assert_safe result, expected
     end
 
-    test "defines name/2 block function clause for given component" do
-      expected = ~s(<ul class="list extra">Content</ul>)
+    test "when list" do
+      expected = ~s(<div class="alert alert-success alert-primary">Alert!</div>)
 
       result =
-        Dummy.list class: "extra" do
-          "Content"
+        Alert.alert variants: [:success, :primary] do
+          "Alert!"
         end
 
       assert_safe result, expected
     end
 
-    test "defines variant/2 function clause for given component" do
-      expected = ~s(<ul class="list list-flush">Content</ul>)
-
-      result = Dummy.list(:flush, "Content")
-
-      assert_safe result, expected
-    end
-
-    test "defines variant/3 function clause for given component" do
-      expected = ~s(<ul class="list list-flush extra">Content</ul>)
-
-      result = Dummy.list(:flush, "Content", class: "extra")
-
-      assert_safe result, expected
-    end
-
-    test "defines variant/2 block function clause for given component" do
-      expected = ~s(<ul class="list list-flush">Content</ul>)
+    test "when variant merge is `false`" do
+      expected = ~s(<div class="alert-another">Alert!</div>)
 
       result =
-        Dummy.list :flush do
-          "Content"
+        Alert.alert :another do
+          "Alert!"
         end
 
       assert_safe result, expected
     end
 
-    test "defines variant/3 block function clause for given component" do
-      expected = ~s(<ul class="list list-flush extra">Content</ul>)
+    test "when variant prefix is `false`" do
+      expected = ~s(<div class="alert onemore">Alert!</div>)
 
       result =
-        Dummy.list :flush, class: "extra" do
-          "Content"
+        Alert.alert :onemore do
+          "Alert!"
         end
 
-      assert_safe result, expected
+      assert_safe(result, expected)
+    end
+
+    test "when variant prefix is custom" do
+      expected = ~s(<div class="alert custom-andmore">Alert!</div>)
+
+      result =
+        Alert.alert :andmore do
+          "Alert!"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "with class option" do
+      expected = ~s(<div class="alert alert-success extra">Alert!</div>)
+
+      result =
+        Alert.alert :success, class: "extra" do
+          "Alert!"
+        end
+
+      assert_safe(result, expected)
     end
   end
 
-  describe "deftag" do
-    defmodule Void do
+  describe "options" do
+    defmodule Options do
       import ExComponent
 
-      deftag(:divider, tag: :hr, class: "divider", variants: [:lg])
+      defcontenttag(:col, tag: :div, class: "col", options: [:sm])
     end
 
-    test "defines name/1 function clause for given component" do
-      result = Void.divider()
-      assert_safe result, ~s(<hr class="divider">)
-    end
+    test "registers options" do
+      expected = ~s(<div class="col col-sm-6">Column!</div>)
 
-    test "defines name/2 function clause for given component" do
-      result = Void.divider(class: "extra")
-      assert_safe result, ~s(<hr class="divider extra">)
-    end
+      result =
+        Options.col sm: 6 do
+          "Column!"
+        end
 
-    test "defines variant/1 function clause for given component" do
-      result = Void.divider(:lg)
-      assert_safe result, ~s(<hr class="divider divider-lg">)
-    end
-
-    test "defines variant/2 function clause for given component" do
-      result = Void.divider(:lg, class: "extra")
-      assert_safe result, ~s(<hr class="divider divider-lg extra">)
+      assert_safe(result, expected)
     end
   end
 end

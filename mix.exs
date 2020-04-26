@@ -10,7 +10,8 @@ defmodule ExComponent.MixProject do
       deps: deps(),
       package: package(),
       name: "ExComponent",
-      description: "A DSL for building dynamic and reusable components in EEx for any frontend framework.",
+      description:
+        "A DSL for building dynamic and reusable components in EEx for any frontend framework.",
       source_url: "https://github.com/abitdodgy/ex_component"
     ]
   end

@@ -199,12 +199,14 @@ defmodule ExComponent do
           end
           #=> <tag class="#{unquote(name)} extra">...</tag>
 
-      #{if unquote(variants) do
-        ~s(    #{unquote(name)} :variant, do: \"...\"\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} variant\">...</tag>\n\n) <>
-        ~s(    #{unquote(name)} :variant, class: \"extra\", do: \"...\"\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} variant extra\">...</tag>\n\n)
-      end}
+      #{
+        if unquote(variants) do
+          ~s(    #{unquote(name)} :variant, do: \"...\"\n) <>
+            ~s(    #=> <tag class=\"#{unquote(name)} variant\">...</tag>\n\n) <>
+            ~s(    #{unquote(name)} :variant, class: \"extra\", do: \"...\"\n) <>
+            ~s(    #=> <tag class=\"#{unquote(name)} variant extra\">...</tag>\n\n)
+        end
+      }
 
       ## Options
 
@@ -236,7 +238,7 @@ defmodule ExComponent do
         end
 
         def unquote(name)(variant, content, opts) do
-          render(content, [variants: variant] ++ opts, unquote(options))
+          render(content, [variants: [variant]] ++ opts, unquote(options))
         end
       end
 
@@ -266,12 +268,14 @@ defmodule ExComponent do
           #{unquote(name)} class: "extra"
           #=> <tag class="#{unquote(name)} extra">>
 
-      #{if unquote(variants) do
-        ~s(    #{unquote(name)} :variant\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} variant\">\n\n) <>
-        ~s(    #{unquote(name)} :variant, class: \"extra\""\n) <>
-        ~s(    #=> <tag class=\"#{unquote(name)} variant extra\">\n\n)
-      end}
+      #{
+        if unquote(variants) do
+          ~s(    #{unquote(name)} :variant\n) <>
+            ~s(    #=> <tag class=\"#{unquote(name)} variant\">\n\n) <>
+            ~s(    #{unquote(name)} :variant, class: \"extra\""\n) <>
+            ~s(    #=> <tag class=\"#{unquote(name)} variant extra\">\n\n)
+        end
+      }
 
       ## Options
 
@@ -287,11 +291,11 @@ defmodule ExComponent do
       """
       if unquote(variants) do
         def unquote(name)(variant) when is_atom(variant) do
-          unquote(name)(variants: variant)
+          unquote(name)(variants: [variant])
         end
 
         def unquote(name)(variant, opts) when is_atom(variant) do
-          unquote(name)([variants: variant] ++ opts)
+          unquote(name)([variants: [variant]] ++ opts)
         end
       end
 
@@ -305,11 +309,11 @@ defmodule ExComponent do
 
   @doc false
   def render(opts, defaults) do
-    {opts, defaults} = merge_default_opts(opts, defaults)
+    {opts, private_opts} = merge_default_opts(opts, defaults)
 
     opts
-    |> put_component(defaults)
-    |> put_content(:parent, defaults)
+    |> put_component(private_opts)
+    |> put_content(:parent, opts)
   end
 
   @doc false
@@ -319,74 +323,67 @@ defmodule ExComponent do
 
   @doc false
   def render(content, opts, defaults) do
-    {opts, defaults} = merge_default_opts(opts, defaults)
+    {opts, private_opts} = merge_default_opts(opts, defaults)
 
     [content]
-    |> put_content(:wrap_content, defaults)
-    |> put_children(defaults)
-    |> put_component(opts, defaults)
-    |> put_content(:parent, defaults)
+    |> put_content(:wrap_content, opts)
+    |> put_children(opts)
+    |> put_component(opts, private_opts)
+    |> put_content(:parent, opts)
   end
 
   defp merge_default_opts(opts, defaults) do
+    private_opts = Keyword.take(defaults, [:class, :variants, :options])
+
     default_opts =
       defaults
-      |> Keyword.get(:html_opts, [])
+      |> Keyword.drop([:class, :variants, :options])
+
+    opts =
+      opts
+      |> Keyword.get(:variants, [])
+      |> Enum.reduce(default_opts, fn variant, acc ->
+        variant_opts = get_in(private_opts, [:variants, variant])
+        Keyword.merge(acc, variant_opts)
+      end)
+      |> Keyword.delete(:class)
       |> Keyword.merge(opts)
-      |> Keyword.drop(@overridable_opts)
 
-    overridden_opts = Keyword.take(opts, @overridable_opts)
-    component_opts = Keyword.merge(defaults, overridden_opts)
-
-    {default_opts, component_opts}
+    {opts, private_opts}
   end
 
   defp put_children(content, opts) do
     opts
     |> Keyword.take([:append, :prepend])
-    |> Enum.reduce(content, fn {pos, child}, acc ->
-      child =
-        case child do
-          {:safe, _content} ->
-            child
-
-          child when is_atom(child) ->
-            tag(child)
-
-          {tag, opts} when is_list(opts) ->
-            tag(tag, opts)
-
-          {tag, content} ->
-            content_tag(tag, content)
-          
-          {tag, content, opts} ->
-            content_tag(tag, content, opts)
-        end
-
-      case pos do
+    |> Enum.reduce(content, fn {position, child}, acc ->
+      case position do
         :append ->
-          [acc | child]
+          [acc | make_child(child)]
 
         :prepend ->
-          [child | acc]
+          [make_child(child) | acc]
       end
     end)
   end
 
-  defp put_component(opts, defaults) do
-    opts = put_class(opts, defaults)
+  defp make_child({:safe, _content} = child), do: child
+  defp make_child(child) when is_atom(child), do: tag(child)
+  defp make_child({tag, opts}) when is_list(opts), do: tag(tag, opts)
+  defp make_child({tag, content}), do: content_tag(tag, content)
+  defp make_child({tag, content, opts}), do: content_tag(tag, content, opts)
 
-    defaults
-    |> Keyword.get(:tag)
-    |> tag(opts)
+  defp put_component(opts, private_opts) do
+    tag = Keyword.get(opts, :tag)
+    opts = put_class(opts, private_opts)
+    
+    tag(tag, opts)
   end
 
-  defp put_component(content, opts, defaults) do
-    opts = put_class(opts, defaults)
+  defp put_component(content, opts, private_opts) do
+    tag = Keyword.get(opts, :tag)
+    opts = put_class(opts, private_opts)
 
-    defaults
-    |> Keyword.get(:tag)
-    |> case do
+    case tag do
       fun when is_function(fun) ->
         apply(fun, [content, opts])
 
@@ -394,7 +391,7 @@ defmodule ExComponent do
         content_tag(tag, content, opts)
     end
   end
-  
+
   defp put_content(content, parent, opts) do
     opts
     |> Keyword.get(parent)
@@ -410,56 +407,104 @@ defmodule ExComponent do
 
       {name, opts} ->
         content_tag(name, content, opts)
-
     end
   end
 
-  defp put_class(opts, defaults) do
-    base_class = Keyword.fetch!(defaults, :class)
-    user_class = Keyword.get(opts, :class)
-
-    variant_prefix = get_variant_prefix(defaults, base_class)
-
-    variant_class =
-      opts
-      |> Keyword.get_values(:variants)
-      |> List.flatten()
-      |> Enum.map(fn variant ->
-        make_variant(variant, variant_prefix)
-      end)
-
+  defp put_class(opts, private_opts) do
     class =
-      [base_class, variant_class, user_class]
-      |> List.flatten()
-      |> Enum.reject(&is_nil/1)
-      |> Enum.join(" ")
+      opts
+      |> put_class_and_variant(private_opts)
+      |> put_options(opts, private_opts)
+      |> put_user_class(opts)
+      |> filter()
 
     opts
-    |> Keyword.delete(:variants)
+    |> clean_opts(private_opts)
     |> Keyword.put(:class, class)
   end
 
-  defp get_variant_prefix(defaults, default) do
-    defaults
-    |> Keyword.get(:variant_class_prefix)
-    |> case do
-      nil ->
-        default
+  defp filter(class_list) do
+    class_list
+    |> List.flatten()
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" ")
+  end
 
-      prefix ->
-        prefix
+  defp put_class_and_variant(opts, private_opts) do
+    base_class = Keyword.fetch!(private_opts, :class)
+
+    opts
+    |> Keyword.get(:variants, [])
+    |> case do
+      [] ->
+        [base_class]
+
+      variants ->
+        Enum.flat_map(variants, fn variant ->
+          private_opts
+          |> get_in([:variants, variant])
+          |> get_variant_class(base_class)
+        end)
+        |> Enum.uniq()
     end
   end
 
-  defp make_variant(variant, false), do: variant
+  defp get_variant_class(variant, base_class) do
+    class = Keyword.get(variant, :class)
 
-  defp make_variant(variant, prefix) do
-    Enum.join([prefix, dasherize(variant)], "-")
+    case {
+      Keyword.get(variant, :merge, true),
+      Keyword.get(variant, :prefix, base_class)
+    } do
+      {true, false} ->
+        [base_class, class]
+
+      {true, prefix} ->
+        [base_class, "#{prefix}-#{class}"]
+
+      {false, false} ->
+        [class]
+
+      {false, prefix} ->
+        ["#{prefix}-#{class}"]
+    end
   end
 
-  defp dasherize(atom) do
-    atom
-    |> Atom.to_string()
-    |> String.replace("_", "-")
+  defp put_options(list, opts, private_opts) do
+    base_class = Keyword.fetch!(private_opts, :class)
+
+    class =
+      private_opts
+      |> Keyword.get(:options, [])
+      |> Enum.map(fn option ->
+        opts
+        |> Keyword.get(option)
+        |> case do
+          nil ->
+            nil
+
+          true ->
+            ~s(#{base_class}-#{option})
+
+          value ->
+            ~s(#{base_class}-#{option}-#{value})
+        end
+      end)
+
+    List.insert_at(list, -1, class)
+  end
+
+  defp put_user_class(list, opts) do
+    class = Keyword.get(opts, :class)
+    List.insert_at(list, -1, class)
+  end
+
+  defp clean_opts(opts, private_opts) do
+    options = Keyword.get(private_opts, :options, [])
+
+    opts
+    |> Keyword.drop(options)
+    |> Keyword.drop([:variants, :merge, :prefix])
+    |> Keyword.drop(@overridable_opts)
   end
 end
