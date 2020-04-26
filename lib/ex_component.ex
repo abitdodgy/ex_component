@@ -375,7 +375,7 @@ defmodule ExComponent do
   defp put_component(opts, private_opts) do
     tag = Keyword.get(opts, :tag)
     opts = put_class(opts, private_opts)
-    
+
     tag(tag, opts)
   end
 
