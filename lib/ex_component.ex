@@ -597,22 +597,43 @@ defmodule ExComponent do
     class =
       private_opts
       |> Keyword.get(:options, [])
-      |> Enum.map(fn option ->
+      |> Enum.map(fn {name, option_opts} ->
         opts
-        |> Keyword.get(option)
+        |> Keyword.get(name)
         |> case do
           nil ->
             nil
 
-          true ->
-            ~s(#{base_class}-#{option})
-
           value ->
-            ~s(#{base_class}-#{option}-#{value})
+            get_option_class(option_opts, value, base_class)
         end
       end)
-
     List.insert_at(list, -1, class)
+  end
+
+  defp get_option_class(option, value, base_class) do
+    class = Keyword.fetch!(option, :class)
+    prefix = Keyword.get(option, :prefix, false)
+
+    case {prefix, value} do
+      {false, true} ->
+        class
+
+      {false, value} ->
+        ~s(#{class}-#{value})
+
+      {true, true} ->
+        ~s(#{base_class}-#{class})
+
+      {true, value} ->
+        ~s(#{base_class}-#{class}-#{value})
+
+      {prefix, true} ->
+        ~s(#{prefix}-#{class})
+
+      {prefix, value} ->
+        ~s(#{prefix}-#{class}-#{value})
+    end
   end
 
   defp put_caller_class(list, opts) do
@@ -621,7 +642,12 @@ defmodule ExComponent do
   end
 
   defp clean_opts(opts, private_opts) do
-    options = Keyword.get(private_opts, :options, [])
+    options =
+      private_opts
+      |> Keyword.get(:options, [])
+      |> Enum.map(fn {name, _option_opts} ->
+        name
+      end)
 
     opts
     |> Keyword.drop(options)

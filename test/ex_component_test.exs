@@ -277,6 +277,21 @@ defmodule ExComponentTest do
           andmore: [class: "andmore", prefix: "custom"]
         ]
       )
+
+      defcontenttag(:col,
+        tag: :div,
+        class: "col",
+        variants:
+          for col <- 1..12 do
+            {:"#{col}", [class: col, merge: false]}
+          end,
+
+        options: [
+          sm: [class: "col-sm"],
+          md: [class: "col-md"],
+          lg: [class: "col-lg"]
+        ]
+      )
     end
 
     test "when atom" do
@@ -301,7 +316,7 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "when variant merge is `false`" do
+    test "when variant `:merge` is `false`" do
       expected = ~s(<div class="alert-another">Alert!</div>)
 
       result =
@@ -312,7 +327,7 @@ defmodule ExComponentTest do
       assert_safe result, expected
     end
 
-    test "when variant prefix is `false`" do
+    test "when variant `:prefix` is `false`" do
       expected = ~s(<div class="alert onemore">Alert!</div>)
 
       result =
@@ -323,7 +338,7 @@ defmodule ExComponentTest do
       assert_safe(result, expected)
     end
 
-    test "when variant prefix is custom" do
+    test "when variant `:prefix` is custom" do
       expected = ~s(<div class="alert custom-andmore">Alert!</div>)
 
       result =
@@ -334,12 +349,34 @@ defmodule ExComponentTest do
       assert_safe(result, expected)
     end
 
-    test "with class option" do
+    test "with `:class` option" do
       expected = ~s(<div class="alert alert-success extra">Alert!</div>)
 
       result =
         Alert.alert :success, class: "extra" do
           "Alert!"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "col with integer variant" do
+      expected = ~s(<div class="col-1">Column!</div>)
+
+      result =
+        Alert.col 1 do
+          "Column!"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "col with kitchen sink" do
+      expected = ~s(<div class="col-6 col-sm-12 col-md-6 extra">Column!</div>)
+
+      result =
+        Alert.col 6, sm: 12, md: 6, class: "extra" do
+          "Column!"
         end
 
       assert_safe(result, expected)
@@ -350,7 +387,13 @@ defmodule ExComponentTest do
     defmodule Options do
       import ExComponent
 
-      defcontenttag(:col, tag: :div, class: "col", options: [:sm])
+      defcontenttag(:col, tag: :div, class: "col", options: [
+          sm: [class: "col-sm"],
+          md: [class: "md", prefix: true],
+          lg: [class: "lg", prefix: "custom"],
+          auto: [class: "auto"]
+        ]
+      )
     end
 
     test "registers options" do
@@ -363,39 +406,34 @@ defmodule ExComponentTest do
 
       assert_safe(result, expected)
     end
-  end
 
-  describe "integer variant" do
-    defmodule Col do
-      import ExComponent
-
-      defcontenttag(:col,
-        tag: :div,
-        class: "col",
-        variants:
-          for col <- 1..12 do
-            {:"#{col}", [class: col, merge: false]}
-          end,
-        options: [:sm, :md, :lg]
-      )
-    end
-
-    test "col with integer variant" do
-      expected = ~s(<div class="col-1">Column!</div>)
+    test "accepts a boolean `:prefix`" do
+      expected = ~s(<div class="col col-md-6">Column!</div>)
 
       result =
-        Col.col 1 do
+        Options.col md: 6 do
           "Column!"
         end
 
       assert_safe(result, expected)
     end
 
-    test "col with another integer variant" do
-      expected = ~s(<div class="col-6 col-sm-12 col-md-6 extra">Column!</div>)
+    test "accepts a custom `:prefix`" do
+      expected = ~s(<div class="col custom-lg-6">Column!</div>)
 
       result =
-        Col.col 6, sm: 12, md: 6, class: "extra" do
+        Options.col lg: 6 do
+          "Column!"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "with a boolean value" do
+      expected = ~s(<div class="col auto">Column!</div>)
+
+      result =
+        Options.col auto: true do
           "Column!"
         end
 
