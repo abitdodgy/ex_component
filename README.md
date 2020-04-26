@@ -1,19 +1,35 @@
 # ExComponent
 
-DSL for generating reusable and dynamic HTML components.
+A DSL for easily building dynamic, reusable components for your frontend framework in Elixir.
 
 ```elixir
 include ExComponent
 
-defcontenttag(:alert, tag: :div, class: "alert", variants: [:success, :danger])
+defcontenttag :alert,
+  tag: :div,
+  class: "alert",
+  variants: [
+    primary: [class: "primary"],
+    success: [class: "success"]
+  ]
 
-alert :success do
+alert :primary, "Alert!"
+#=> <div class="alert alert-primary">Alert!</div>
+
+alert :primary, "Alert!", class: "extra"
+#=> <div class="alert alert-primary extra">Alert!</div>
+
+alert :success, "Alert!"
+#=> <div class="alert alert-success">Alert!</div>
+```
+
+Generated function clauses accept a block and a list of opts.
+
+```elixir
+alert :primary, class: "extra" do
   "Alert!"
 end
-#=> <div class="alert alert-success">Alert!</div>
-
-alert(:success, "Alert!")
-#=> <div class="alert alert-success">Alert!</div>
+#=> <div class="alert alert-primary extra">Alert!</div>
 ```
 
 This lib is a work in progress and its API might change.
