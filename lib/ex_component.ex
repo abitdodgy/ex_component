@@ -293,6 +293,7 @@ defmodule ExComponent do
     ]
 
   @overridable_opts ExComponent.Config.get_config(:overridable_opts)
+  @private_opts ExComponent.Config.get_config(:private_opts)
 
   defmacro defcontenttag(name, options) do
     variants = Keyword.get(options, :variants)
@@ -622,7 +623,7 @@ defmodule ExComponent do
 
     opts
     |> Keyword.drop(options)
-    |> Keyword.drop([:variants, :merge, :prefix])
+    |> Keyword.drop(@private_opts)
     |> Keyword.drop(@overridable_opts)
   end
 end
