@@ -9,7 +9,13 @@ defmodule ExComponent do
       end
       #=> <div class="card">Content!</div>
 
-      defcontenttag :alert, tag: :div, class: "alert", variants: [:primary, :success]
+      defcontenttag :alert,
+        tag: :div,
+        class: "alert",
+        variants: [
+          primary: [class: "primary"],
+          success: [class: "success"]
+        ]
 
       alert :primary, "Alert!"
       #=> <div class="alert alert-primary">Alert!</div>
@@ -35,10 +41,10 @@ defmodule ExComponent do
   own content, like `hr`, while the `defcontenttag` macro defines components that accept
   their own content, like `div`.
 
-  ### Function Delegation
+  ## Function Delegation
 
-  The `:tag` option accepts an atom and an anonymous function, which allows you to generate
-  components that defer execution to another function.
+  The `:tag` option accepts an atom and an anonymous function (when using `defcontenttag`),
+  which allows you to generate components that defer execution to another function.
 
   This is useful if you want to use `Phoenix.HTML.Link.link/2`, for example.
 
@@ -47,73 +53,186 @@ defmodule ExComponent do
       list_group_item "Action", to: "#"
       #=> <a href="#" class: "list-group-item">Action</a>
 
-  ### CSS Class
+  ## CSS Class
 
   The `:class` option is the base class of the component and is used to build
-  variant classes in the form `class="{class class-variant}"`.
+  variants and options. See the Variants section below for details.
 
-  ### Variants
+  ## Variants
 
-  The `:variants` option adds a modifier class to the component and generates `component/3`
-  clauses for each variant, where the variant is the first argument.
+  A variant generates a `name/3` function clause that takes the variant name as its first argument.
 
-      defcontenttag :alert, tag: :div, class: "alert", variants: [:success]
+  Variants are a handy way to define the same component in different contexts.
 
-      alert :success, class: "extra" do
-        "Alert!"
+      defcontenttag :button,
+        tag: :button,
+        class: "btn",
+        variants: [
+          success: [class: "success"],
+          primary: [class: "primary"],
+          dropdown: [
+            class: "toggle-dropdown", prefix: false,
+            data: [toggle: "dropdown"],
+            aria: [haspopup: true, expanded: false]
+          ]
+        ]
+
+        button :success do
+          "Success!"
+        end
+        #=> <button class="btn btn-success">Success!</button>
+
+        button :dropdown do
+          "Dropdown!"
+        end
+        #=> <button class="btn toggle-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown!</button>
+
+  You can combine variants by passing a named option with a list.
+
+        button variants: [:success, :dropdown] do
+          "Dropdown!"
+        end
+        #=> <button class="btn btn-success toggle-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown!</button>
+
+  ### Merge
+
+  Each declared variant has a `:merge` option that defaults to `true`. While it's handy for declaring
+  contextual (`class="alert alert-{success|danger}"`) variants that inherit the parent component class, sometimes
+  you may want to customise or remove the component class.
+
+      defcontenttag :dropdown,
+        tag: :ul,
+        class: "dropdown",
+        variants: [
+          dropup: [class: "dropup", merge: false]
+        ]
+
+      dropdown :dropup do
+        "Dropup!"
       end
-      #=> <div class="alert alert-success extra">Alert!</div>
+      #=> <ul class="dropup">...</ul>
 
-  Some components have multiple variants. You can use `component/2` and
-  pass a list to the `:variants` option.
-
-      list_group variants: [:flush, :horizontal], class: "extra" do
-        "..."
+      dropdown :dropdown do
+        "Dropup!"
       end
-      #=> <div class="list-group list-group-flush list-group-horizontal ">...</div>
+      #=> <ul class="dropdown">...</ul>
 
-  ### Variant Class
+  ### Prefix
 
-  Some components have variants that do not inherit the component's base class, or
-  have a custom class. For example, the `dropup` and `dropleft` variants of Bootstrap's dropdowns.
+  The prefix is a shortcut for prefixing the component's class to the variant class. These three examples
+  are equivalent.
 
-  Set `variant_class_prefix: false` to define a variant without a class prefix. You can also
-  provide your own custom prefix.
+        defcontenttag :alert,
+          tag: :div,
+          class: "alert",
+          variants: [
+            primary: [class: "primary"]
+          ]
 
-      defcontenttag :dropdown, tag: :div, class: "dropdown", variants: [:dropup, :dropleft], variant_class_prefix: false
+      defcontenttag :alert,
+          tag: :div,
+          class: "alert",
+          variants: [
+            primary: [class: "alert-primary", prefix: false]
+          ]
 
-      dropdown :dropleft do
-        ...
+      defcontenttag :alert,
+          tag: :div,
+          class: "alert",
+          variants: [
+            primary: [class: "primary", prefix: "alert"]
+          ]
+
+  ## Declaring Options
+
+  You can declare a list of options that can be used during function calls. This is handy for combining
+  with variants to create complex class combinations.
+
+      defcontenttag :col,
+          tag: :div,
+          class: "col",
+          options: [:sm, :md, :lg, :auto]
+
+      col auto: true, sm: 6, md: 4 do
+        "Col!"
       end
-      #=> <div class="dropdown dropleft">...</div>
+      #=> <div class="col col-auto col-sm-6 col-md-4">...</div>
+
+  In the above example, you may not want to use the `col` class since you are declaring `col`. In this case,
+  combine with variants for the desired combinations.
+
+      defcontenttag :col,
+          tag: :div,
+          class: "col",
+          variants: [
+            auto: [class: "auto"],
+            sm: [class: "sm"],
+            md: [class: "md"],
+            lg: [class: "lg"],
+          ],
+          options: [:auto, :sm, :md, :lg]
+
+      col :auto, sm: 6, md: 4 do
+        "Col!"
+      end
+      #=> <div class="col-auto col-sm-6 col-md-4">...</div>
+
+  Note that, options
+
+  + have their component's class prefixed
+  
+  + can be passed `true` to use the option's name in the class rather than an explicit value.
+
+  ## A Note on Variants And Options
+
+  While combing these two options can be powerful, sometimes it's best to opt for simpliciy. The examples
+  above can be declared as separate components.
+
+      defcontenttag :col_auto,
+          tag: :div,
+          class: "col-auto",
+          options: [:auto, :sm, :md, :lg]
+
+      defcontenttag :col_sm,
+          tag: :div,
+          class: "col-sm",
+          options: [:auto, :sm, :md, :lg]
+
+      col_auto sm: 6, md: 4 do
+        "Col!"
+      end
+      #=> <div class="col-auto col-sm-6 col-md-4">...</div>
+
+      col_sm md: 4 do
+        "Col!"
+      end
+      #=> <div class="col-sm col-md-4">...</div>
 
   ### Appending and Prepending Content
 
-  Use `:append` and/or `:prepend` to add additional content your component. For example, a Bootstrap
-  alert that has a close button.
+  You can append or prepend additional components to your component's content by using `:append` and/or `:prepend`.
+
+  For example, a Bootstrap alert can have a close button.
 
       defcontenttag :close, tag: :button, wrap_content: :span, class: "close", data: [dismiss: "alert"], aria: [label: "Close"]
-      defcontenttag :alert, tag: :div, class: "alert", prepend: close("&times;"), variants: [:primary]
+      defcontenttag :alert, tag: :div, class: "alert", prepend: close("&times;"), variants: [primary: [class: "primary"]]
 
       alert :primary do
         "Content"
       end
       <div class="alert alert-primary">
-        <button aria-label=\"Close\" class=\"close\" data-dismiss=\"alert\">
+        <button aria-label="Close" class="close" data-dismiss="alert">
           <span>&times;</span>
         </button>
         Content
       </div>
 
-  Both options accept an atom, or a tuple in one the forms `{:safe, iodata}`,
-  `{:tag, opts}`, `{:tag, "content"}`, and `{:tag, "content", opts}`.
+  Both options accept an atom or a tuple in one the forms `{:safe, iodata}`, `{:tag, opts}`, `{:tag, "content"}`, and `{:tag, "content", opts}`.
 
   ### Nesting Components
 
-  The `:parent` option is useful for nesting a component in an additional tag.
-
-  You can pass an atom, or a tuple with either a function or an atom, and a
-  list of parent options.
+  The `:parent` option is useful for nesting a component in an additional tag. You can pass
+  an atom, or a tuple with either a function or an atom, and a list of parent options.
 
   For example, breadcrumbs in Bootstrap are built with an `ol` tag wrapped in a `nav` tag.
 
@@ -143,14 +262,13 @@ defmodule ExComponent do
 
   ### Default HTML Options
 
-  You can pass a list of HTML options to `:html_opts`, which gets forwarded to the underlying
-  HTML. Any default options can be overriden during function calls.
+  Any additional options declared in the component definition are forwarded onto the underlying HTML. Default options can be overriden during function calls.
 
   ## Options
 
-    * `:class` - the component's class name. This option is required.
+    * `:tag` - the component's tag. Can be an atom or an anonymous function.
 
-    * `:html_opts` - a list of opts to forward onto the HTML.
+    * `:class` - the component's class name. This option is required.
 
     * `:parent` - wraps the component in the given tag. Accepts an atom, a anonymous function, or a tuple where the first element is the parent tag and the second is a list of parent options. For example, `{:div, [class: "something"]}`.
 
@@ -160,9 +278,9 @@ defmodule ExComponent do
 
     * `:wrap_content` - wraps the inner content of the component in the given tag. See the `:parent` option for usage.
 
-    * `:variants` - a list of component variants. Each variant generates a `component/3` (`component/2` for `deftag`) function clause where an atom variant name is the first argument.
+    * `:variants` - a keyword list of component variants. Each variant generates a `component/3` (`component/2` for `deftag`) function clause where an atom variant name is the first argument.
 
-    * `:variant_class_prefix` - the class prefix to use when composing variants. Defaults to the `class` option. Use `false` for no prefix.
+    * `:options` - a list of options that the component can accept, which generate additional classes.
 
 
   """
@@ -213,17 +331,17 @@ defmodule ExComponent do
       Besides any opts that can be forwarded onto `PHoenix.HTML.Tag`, the following
       options are specific to ExComponent.
 
-        + `:tag` - overrides the given tag in the `:type` component option.
+        + `:tag` - overrides the `:tag` option in the component definition.
 
-        + `:append` - overrides the component's `:append` option in @moduledoc.
+        + `:append` - overrides the `:append` option in the component defintion.
 
-        + `:parent` - overrides the component;s `:parent` option in @moduledoc.
+        + `:parent` - overrides the `:parent` option in component definition.
 
-        + `:prepend` - overrides the component's `:prepend` option in @moduledoc.
+        + `:prepend` - overrides the `:prepend` option in the component defintion.
 
-        + `:wrap_content` - overrides the component's `:wrap_content` option in @moduledoc.
+        + `:wrap_content` - overrides the `:wrap_content` option in the component definition.
 
-        + `:variants` - a list of variants.
+        + `:variants` - a list of variants. Variants must be declared in the component definition.
 
       """
       if unquote(variants) do
@@ -282,11 +400,11 @@ defmodule ExComponent do
       Besides any opts that can be forwarded onto `PHoenix.HTML.Tag`, the following
       options are specific to ExComponent.
 
-        + `:tag` - overrides the given tag in the `:type` component option.
+        + `:tag` - overrides the `:tag` option in the component definition.
 
-        + `:parent` - overrides the component;s `:parent` option in @moduledoc.
+        + `:parent` - overrides the `:parent` option in component definition.
 
-        + `:variants` - a list of variants.
+        + `:variants` - a list of variants. Variants must be declared in the component definition.
 
       """
       if unquote(variants) do
