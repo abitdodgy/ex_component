@@ -11,7 +11,7 @@ defmodule ExComponentTest do
     defmodule Tag do
       import ExComponent
 
-      deftag(:divider, tag: :hr, class: "divider", variants: [lg: [class: "lg"]])
+      deftag(:divider, tag: :hr, class: "divider", variants: [lg: [class: "divider-lg"]])
     end
 
     test "defines name/0 function for the given component" do
@@ -43,7 +43,7 @@ defmodule ExComponentTest do
     defmodule ContentTag do
       import ExComponent
 
-      defcontenttag(:list, tag: :ul, class: "list", variants: [flush: [class: "flush"]])
+      defcontenttag(:list, tag: :ul, class: "list", variants: [flush: [class: "list-flush"]])
     end
 
     test "defines name/1 function for given component" do
@@ -270,10 +270,10 @@ defmodule ExComponentTest do
         tag: :div,
         class: "alert",
         variants: [
-          primary: [class: "primary"],
-          success: [class: "success"],
-          another: [class: "another", merge: false],
-          onemore: [class: "onemore", prefix: false],
+          primary: [class: "primary", prefix: true],
+          success: [class: "success", prefix: true],
+          another: [class: "another", prefix: true, merge: false],
+          onemore: [class: "onemore"],
           andmore: [class: "andmore", prefix: "custom"]
         ]
       )
@@ -283,9 +283,8 @@ defmodule ExComponentTest do
         class: "col",
         variants:
           for col <- 1..12 do
-            {:"#{col}", [class: col, merge: false]}
+            {:"#{col}", [class: col, merge: false, prefix: true]}
           end,
-
         options: [
           sm: [class: "col-sm"],
           md: [class: "col-md"],
@@ -387,7 +386,10 @@ defmodule ExComponentTest do
     defmodule Options do
       import ExComponent
 
-      defcontenttag(:col, tag: :div, class: "col", options: [
+      defcontenttag(:col,
+        tag: :div,
+        class: "col",
+        options: [
           sm: [class: "col-sm"],
           md: [class: "md", prefix: true],
           lg: [class: "lg", prefix: "custom"],

@@ -9,12 +9,10 @@ defmodule ExComponent do
       end
       #=> <div class="card">Content!</div>
 
-      defcontenttag :alert,
-        tag: :div,
-        class: "alert",
+      defcontenttag :alert, tag: :div, class: "alert",
         variants: [
-          primary: [class: "primary"],
-          success: [class: "success"]
+          primary: [class: "alert-primary"],
+          success: [class: "alert-success"]
         ]
 
       alert :primary, "Alert!"
@@ -43,7 +41,7 @@ defmodule ExComponent do
 
   ## Function Delegation
 
-  The `:tag` option accepts an atom and an anonymous function (when using `defcontenttag`),
+  The `:tag` option accepts an atom and, when using `defcontenttag`, an anonymous function,
   which allows you to generate components that defer execution to another function.
 
   This is useful if you want to use `Phoenix.HTML.Link.link/2`, for example.
@@ -55,7 +53,7 @@ defmodule ExComponent do
 
   ## CSS Class
 
-  The `:class` option is the base class of the component and is used to build
+  The `:class` option is the base class of the component and can be used to build
   variants and options. See the Variants section below for details.
 
   ## Variants
@@ -64,14 +62,12 @@ defmodule ExComponent do
 
   Variants are a handy way to define the same component in different contexts.
 
-      defcontenttag :button,
-        tag: :button,
-        class: "btn",
+      defcontenttag :button, tag: :button, class: "btn",
         variants: [
-          success: [class: "success"],
-          primary: [class: "primary"],
+          success: [class: "alert-success"],
+          primary: [class: "alert-primary"],
           dropdown: [
-            class: "toggle-dropdown", prefix: false,
+            class: "toggle-dropdown",
             data: [toggle: "dropdown"],
             aria: [haspopup: true, expanded: false]
           ]
@@ -94,15 +90,27 @@ defmodule ExComponent do
         end
         #=> <button class="btn btn-success toggle-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dropdown!</button>
 
-  ### Merge
+  ### Variant Merge
 
   Each declared variant has a `:merge` option that defaults to `true`. While it's handy for declaring
-  contextual (`class="alert alert-{success|danger}"`) variants that inherit the parent component class, sometimes
-  you may want to customise or remove the component class.
+  contextual variants (`class="alert alert-{success|danger}"`) that inherit the parent component's
+  class, you may want more control over this behaviour.
 
-      defcontenttag :dropdown,
-        tag: :ul,
-        class: "dropdown",
+  Consider this example, which uses `alert` from the component and `alert-primary` from the variant.
+
+      defcontenttag :alert, tag: :div, class: "alert",
+        variants: [
+          primary: [class: "alert-primary"],
+          success: [class: "alert-success"],
+        ]
+
+      alert :primary, "Alert!"
+      #=> <div class="alert alert-primary">Alert!</div>
+
+  However, consider a Bootstrap dropup, which does not prefix the `dropdown` class. You can pass `merge: false`
+  to only use the variant class.
+
+      defcontenttag :dropdown, tag: :ul, class: "dropdown",
         variants: [
           dropup: [class: "dropup", merge: false]
         ]
@@ -113,90 +121,119 @@ defmodule ExComponent do
       #=> <ul class="dropup">...</ul>
 
       dropdown :dropdown do
-        "Dropup!"
+        "Dropdown!"
       end
       #=> <ul class="dropdown">...</ul>
 
-  ### Prefix
+  ### Variant Prefix
 
-  The prefix is a shortcut for prefixing the component's class to the variant class. It default's to
-  the component's `:class` option. The following three examples are equivalent.
+  The prefix is a shortcut for prefixing the component's or a custom class to the variant class. It defaults
+  to `false`. The following three examples are equivalent.
 
-        defcontenttag :alert,
-          tag: :div,
-          class: "alert",
+      defcontenttag :alert, tag: :div, class: "alert",
           variants: [
-            primary: [class: "primary"]
+            primary: [class: "primary", prefix: true]
           ]
 
-      defcontenttag :alert,
-          tag: :div,
-          class: "alert",
+        defcontenttag :alert, tag: :div, class: "alert",
           variants: [
-            primary: [class: "alert-primary", prefix: false]
+            primary: [class: "alert-primary"]
           ]
 
-      defcontenttag :alert,
-          tag: :div,
-          class: "alert",
+      defcontenttag :alert, tag: :div, class: "alert",
           variants: [
             primary: [class: "primary", prefix: "alert"]
           ]
 
   ## Declaring Options
 
-  You can declare a list of options that can be used during function calls. This is handy for combining
-  with variants to create complex class combinations.
+  Options are similar to variants but they do not define a `name/3` clause. Instead, you can pass them
+  as named options when calling a function, as you would for `:class` or any other option.
 
-      defcontenttag :col,
-          tag: :div,
-          class: "col",
-          options: [:sm, :md, :lg, :auto]
-
-      col auto: true, sm: 6, md: 4 do
+      col :variant, option: value, option: value, ... do
         "Col!"
       end
-      #=> <div class="col col-auto col-sm-6 col-md-4">...</div>
 
-  In the above example, you may not want to use the `col` class since you are declaring `col`. In this case,
-  combine with variants for the desired combinations.
+  Unlike variants, options only compose CSS classes, while variants accept any HTML options that they
+  forward onto the HTML.
 
-      defcontenttag :col,
-          tag: :div,
-          class: "col",
+      defcontenttag :col, tag: :div, class: "col",
+          options: [
+            sm: [class: "col-sm"],
+            auto: [class: "col-auto"]
+          ]
+
+      col auto: true, sm: 6 do
+        "Col!"
+      end
+      #=> <div class="col col-auto col-sm-6">...</div>
+
+  ### Option Prefix
+
+  Like variants, options also access a `:prefix`, which is a shortcut for prefixing the component's or a custom class to the option's
+  class and value. It works the same way that the `:variant` prefix does.
+
+  The following examples are all equivalent. See Variants for more.
+
+      defcontenttag :col, tag: :div, class: "col",
+          options: [
+            sm: [class: "sm", prefix: true],
+          ]
+
+      defcontenttag :col, tag: :div, class: "col",
+          options: [
+            sm: [class: "col-sm"],
+          ]
+
+      defcontenttag :col, tag: :div, class: "col",
+          options: [
+            sm: [class: "sm", prefix: "col"]
+          ]
+
+  ### Combining Options And Variants
+
+  Combine variants and options to create complex class combinations.
+
+  For example, in Bootstrap, `col` and `col-auto` are mutually exclusive. By combining variants and options
+  you can create your desired combination.
+
+      defcontenttag :col, tag: :div, class: "col",
           variants: [
-            auto: [class: "auto"],
-            sm: [class: "sm"],
-            md: [class: "md"],
-            lg: [class: "lg"],
+            sm: [class: "col-sm", merge: false],    # `merge: false` removes the component class, `col`.
+            auto: [class: "col-auto", merge: false]
           ],
-          options: [:auto, :sm, :md, :lg]
+          options: [
+            sm: [class: "col-sm"],
+            auto: [class: "col-auto"]
+          ]
 
-      col :auto, sm: 6, md: 4 do
-        "Col!"
+      col :auto, sm: 6 do
+        "..."
       end
-      #=> <div class="col-auto col-sm-6 col-md-4">...</div>
+      #=> <div class="col-auto col-sm-6">...</div>
 
-  Note that, options can:
+  Note that, options can be passed `true` to use the only the option's class rather than an explicit value.
 
-  + have their component's class prefixed;
-  
-  + be passed `true` to use the option's name as the class rather than an explicit value.
+      col auto: true do
+        "..."
+      end
+      #=> <div class="col-auto">...</div>
 
   ## On Variants And Options
 
-  While combining these options is powerful, sometimes it's best to go for simpliciy. The examples
+  While combining variants and options is powerful, sometimes it's best to go for simpliciy. The examples
   above can be declared as separate components.
 
-      defcontenttag :col_auto,
-          tag: :div,
-          class: "col-auto",
-          options: [:auto, :sm, :md, :lg]
+      defcontenttag :col_auto, tag: :div, class: "col-auto",
+          options: [
+            sm: [class: "col-sm"]
+            md: [class: "col-md"]
+          ]
 
-      defcontenttag :col_sm,
-          tag: :div,
-          class: "col-sm",
-          options: [:auto, :sm, :md, :lg]
+      defcontenttag :col_sm, tag: :div, class: "col-auto",
+          options: [
+            md: [class: "col-md"]
+          ]
 
       col_auto sm: 6, md: 4 do
         "Col!"
@@ -575,19 +612,25 @@ defmodule ExComponent do
 
     case {
       Keyword.get(variant, :merge, true),
-      Keyword.get(variant, :prefix, base_class)
+      Keyword.get(variant, :prefix, false)
     } do
       {true, false} ->
         [base_class, class]
 
-      {true, prefix} ->
-        [base_class, "#{prefix}-#{class}"]
+      {true, true} ->
+        [base_class, "#{base_class}-#{class}"]
+
+      {true, custom} ->
+        [base_class, "#{custom}-#{class}"]
 
       {false, false} ->
         [class]
 
-      {false, prefix} ->
-        ["#{prefix}-#{class}"]
+      {false, true} ->
+        ["#{base_class}-#{class}"]
+
+      {false, custom} ->
+        ["#{custom}-#{class}"]
     end
   end
 
@@ -600,18 +643,15 @@ defmodule ExComponent do
       |> Enum.map(fn {name, option_opts} ->
         opts
         |> Keyword.get(name)
-        |> case do
-          nil ->
-            nil
-
-          value ->
-            get_option_class(option_opts, value, base_class)
-        end
+        |> get_option_class(option_opts, base_class)
       end)
+
     List.insert_at(list, -1, class)
   end
 
-  defp get_option_class(option, value, base_class) do
+  defp get_option_class(nil, _, _), do: nil
+
+  defp get_option_class(value, option, base_class) do
     class = Keyword.fetch!(option, :class)
     prefix = Keyword.get(option, :prefix, false)
 
