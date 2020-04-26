@@ -364,4 +364,23 @@ defmodule ExComponentTest do
       assert_safe(result, expected)
     end
   end
+
+  describe "integer variant" do
+    defmodule Col do
+      import ExComponent
+
+      defcontenttag(:col, tag: :div, class: "col")
+    end
+
+    test "col n" do
+      expected = ~s(<div class="col-6">Column!</div>)
+
+      result =
+        Col.col 6 do
+          "Column!"
+        end
+
+      assert_safe(result, expected)
+    end
+  end
 end
