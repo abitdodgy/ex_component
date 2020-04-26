@@ -369,14 +369,33 @@ defmodule ExComponentTest do
     defmodule Col do
       import ExComponent
 
-      defcontenttag(:col, tag: :div, class: "col")
+      defcontenttag(:col,
+        tag: :div,
+        class: "col",
+        variants:
+          for col <- 1..12 do
+            {:"#{col}", [class: col, merge: false]}
+          end,
+        options: [:sm, :md, :lg]
+      )
     end
 
-    test "col n" do
-      expected = ~s(<div class="col-6">Column!</div>)
+    test "col with integer variant" do
+      expected = ~s(<div class="col-1">Column!</div>)
 
       result =
-        Col.col 6 do
+        Col.col 1 do
+          "Column!"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "col with another integer variant" do
+      expected = ~s(<div class="col-6 col-sm-12 col-md-6 extra">Column!</div>)
+
+      result =
+        Col.col 6, sm: 12, md: 6, class: "extra" do
           "Column!"
         end
 

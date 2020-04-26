@@ -346,10 +346,10 @@ defmodule ExComponent do
 
       """
       if unquote(variants) do
-        def unquote(name)(variant, do: block) when is_atom(variant),
+        def unquote(name)(variant, do: block) when is_atom(variant) or is_integer(variant),
           do: unquote(name)(variant, block, [])
 
-        def unquote(name)(variant, content) when is_atom(variant),
+        def unquote(name)(variant, content) when is_atom(variant) or is_integer(variant),
           do: unquote(name)(variant, content, [])
 
         def unquote(name)(variant, opts, do: block) do
@@ -357,6 +357,7 @@ defmodule ExComponent do
         end
 
         def unquote(name)(variant, content, opts) do
+          variant = if is_atom(variant), do: variant, else: String.to_atom("#{variant}")
           render(content, [variants: [variant]] ++ opts, unquote(options))
         end
       end
@@ -414,6 +415,7 @@ defmodule ExComponent do
         end
 
         def unquote(name)(variant, opts) when is_atom(variant) do
+          variant = if is_atom(variant), do: variant, else: String.to_atom("#{variant}")
           unquote(name)([variants: [variant]] ++ opts)
         end
       end
@@ -511,9 +513,9 @@ defmodule ExComponent do
     end
   end
 
-  defp put_content(content, parent, opts) do
+  defp put_content(content, option, opts) do
     opts
-    |> Keyword.get(parent)
+    |> Keyword.get(option)
     |> case do
       nil ->
         content
@@ -534,17 +536,18 @@ defmodule ExComponent do
       opts
       |> put_class_and_variant(private_opts)
       |> put_options(opts, private_opts)
-      |> put_user_class(opts)
-      |> filter()
+      |> put_caller_class(opts)
+      |> filter_class_list()
 
     opts
     |> clean_opts(private_opts)
     |> Keyword.put(:class, class)
   end
 
-  defp filter(class_list) do
-    class_list
+  defp filter_class_list(list) do
+    list
     |> List.flatten()
+    |> Enum.uniq()
     |> Enum.reject(&is_nil/1)
     |> Enum.join(" ")
   end
@@ -559,12 +562,11 @@ defmodule ExComponent do
         [base_class]
 
       variants ->
-        Enum.flat_map(variants, fn variant ->
+        Enum.map(variants, fn variant ->
           private_opts
           |> get_in([:variants, variant])
           |> get_variant_class(base_class)
         end)
-        |> Enum.uniq()
     end
   end
 
@@ -613,7 +615,7 @@ defmodule ExComponent do
     List.insert_at(list, -1, class)
   end
 
-  defp put_user_class(list, opts) do
+  defp put_caller_class(list, opts) do
     class = Keyword.get(opts, :class)
     List.insert_at(list, -1, class)
   end

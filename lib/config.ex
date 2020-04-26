@@ -4,6 +4,8 @@ defmodule ExComponent.Config do
 
   + `overridable_opts` - a list of default component options that can be overridden during function calls.
 
+  + `private_opts` - a list of opts used when generating the the component.
+
   """
 
   @config %{
