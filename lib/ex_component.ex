@@ -2,13 +2,6 @@ defmodule ExComponent do
   @moduledoc """
   A DSL for easily building dynamic, reusable components for your frontend framework in Elixir.
 
-      defcontenttag :card, tag: :div, class: "card"
-
-      card do
-        "Content!"
-      end
-      #=> <div class="card">Content!</div>
-
       defcontenttag :alert, tag: :div, class: "alert",
         variants: [
           primary: [class: "alert-primary"],
@@ -67,9 +60,7 @@ defmodule ExComponent do
           success: [class: "alert-success"],
           primary: [class: "alert-primary"],
           dropdown: [
-            class: "toggle-dropdown",
-            data: [toggle: "dropdown"],
-            aria: [haspopup: true, expanded: false]
+            class: "toggle-dropdown", data: [toggle: "dropdown"], aria: [haspopup: true, expanded: false]
           ]
         ]
 
@@ -92,11 +83,8 @@ defmodule ExComponent do
 
   ### Variant Merge
 
-  Each declared variant has a `:merge` option that defaults to `true`. While it's handy for declaring
-  contextual variants (`class="alert alert-{success|danger}"`) that inherit the parent component's
-  class, you may want more control over this behaviour.
-
-  Consider this example, which uses `alert` from the component and `alert-primary` from the variant.
+  Each declared variant has a `:merge` option that defaults to `true`. When `true` this option
+  appends the variant class to the component class.
 
       defcontenttag :alert, tag: :div, class: "alert",
         variants: [
@@ -107,8 +95,16 @@ defmodule ExComponent do
       alert :primary, "Alert!"
       #=> <div class="alert alert-primary">Alert!</div>
 
-  However, consider a Bootstrap dropup, which does not prefix the `dropdown` class. You can pass `merge: false`
-  to only use the variant class.
+  The above example gets the class `alert` from the component and the class `alert-primary` from
+  the variant.
+
+  While this is handy for declaring contextual variants that inherit the component's class, you may
+  want more control over this behaviour. In such cases, `:merge` can be set to false, or a custom value.
+
+  The Bootstrap dropup is a great example when control over the `:merge` option can be handy.
+
+      <ul class="dropdown">...</ul>
+      <ul class="dropup">...</ul>
 
       defcontenttag :dropdown, tag: :ul, class: "dropdown",
         variants: [
@@ -127,7 +123,7 @@ defmodule ExComponent do
 
   ### Variant Prefix
 
-  The prefix is a shortcut for prefixing the component's or a custom class to the variant class. It defaults
+  The `:prefix` is a shortcut for prefixing the component's or a custom class to the variant class. It defaults
   to `false`. The following three examples are equivalent.
 
       defcontenttag :alert, tag: :div, class: "alert",
@@ -145,10 +141,32 @@ defmodule ExComponent do
             primary: [class: "primary", prefix: "alert"]
           ]
 
+  ### Variant Option
+
+  Any variant can be declared an option by passing it `option: true`. This means you can pass the variant
+  as a key-value pair along with other HTML options.
+
+      defcontenttag :alert, tag: :div, class: "alert",
+          variants: [
+            primary: [class: "alert-primary", option: true]
+          ]
+
+      alert primary: true do
+        "..."
+      end
+      #=> <div class="alert alert-primary">...</div>
+
+  Note that you can pass a boolean or a custom string to the option when making the function call.
+
+  When you declare a variant as an option, it inherits its variant `:prefix`. See Declaring Options for more information.
+
   ## Declaring Options
 
-  Options are similar to variants but they do not define a `name/3` clause. Instead, you can pass them
-  as named options when calling a function, as you would for `:class` or any other option.
+  Options are similar to variants but they do not define a `name/3` clause and only affect
+  the `:class` option.
+
+  You can pass them as key-value pairs along with other options when calling the fuction, as you
+  would for `:class` or any other option.
 
       col :variant, option: value, option: value, ... do
         "Col!"
@@ -170,7 +188,7 @@ defmodule ExComponent do
 
   ### Option Prefix
 
-  Like variants, options also access a `:prefix`, which is a shortcut for prefixing the component's or a custom class to the option's
+  Like variants, options also accept a `:prefix`, which is a shortcut for prefixing the component's or a custom class to the option's
   class and value. It works the same way that the `:variant` prefix does.
 
   The following examples are all equivalent. See Variants for more.
@@ -639,7 +657,11 @@ defmodule ExComponent do
 
     class =
       private_opts
-      |> Keyword.get(:options, [])
+      |> Keyword.get(:variants, [])
+      |> Enum.filter(fn {_name, opts} ->
+        Keyword.get(opts, :option)
+      end)
+      |> Keyword.merge(Keyword.get(private_opts, :options, []))
       |> Enum.map(fn {name, option_opts} ->
         opts
         |> Keyword.get(name)
@@ -682,6 +704,15 @@ defmodule ExComponent do
   end
 
   defp clean_opts(opts, private_opts) do
+    variants =
+      private_opts
+      |> Keyword.get(:variants, [])
+      |> Enum.map(fn {name, variant_opts} ->
+        if Keyword.get(variant_opts, :option) do
+          name
+        end
+      end)
+    
     options =
       private_opts
       |> Keyword.get(:options, [])
@@ -690,7 +721,7 @@ defmodule ExComponent do
       end)
 
     opts
-    |> Keyword.drop(options)
+    |> Keyword.drop(options ++ variants)
     |> Keyword.drop(@private_opts)
     |> Keyword.drop(@overridable_opts)
   end

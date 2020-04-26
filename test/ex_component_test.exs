@@ -270,7 +270,7 @@ defmodule ExComponentTest do
         tag: :div,
         class: "alert",
         variants: [
-          primary: [class: "primary", prefix: true],
+          primary: [class: "primary", prefix: true, option: true],
           success: [class: "success", prefix: true],
           another: [class: "another", prefix: true, merge: false],
           onemore: [class: "onemore"],
@@ -376,6 +376,28 @@ defmodule ExComponentTest do
       result =
         Alert.col 6, sm: 12, md: 6, class: "extra" do
           "Column!"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "variant can be declared as option" do
+      expected = ~s(<div class="alert alert-primary">Alert!</div>)
+
+      result =
+        Alert.alert primary: true do
+          "Alert!"
+        end
+
+      assert_safe(result, expected)
+    end
+
+    test "variant can be declared as option and used with another" do
+      expected = ~s(<div class="alert alert-success alert-primary">Alert!</div>)
+
+      result =
+        Alert.alert :success, primary: true do
+          "Alert!"
         end
 
       assert_safe(result, expected)
