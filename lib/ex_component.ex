@@ -425,6 +425,24 @@ defmodule ExComponent do
     end
   end
 
+  defmacro defstatictag(name, options) do
+    variants = Keyword.get(options, :variants)
+
+    quote do
+      if unquote(variants) do
+        def unquote(name)(variant) when is_atom(variant), do: unquote(name)(variant, [])
+
+        def unquote(name)(variant, opts) do
+          variant = if is_atom(variant), do: variant, else: String.to_atom("#{variant}")
+          render([variants: [variant]] ++ opts, unquote(options))
+        end
+      end
+
+      def unquote(name)(), do: unquote(name)([])
+      def unquote(name)(opts), do: render(opts, unquote(options))
+    end
+  end
+
   defmacro deftag(name, options) do
     variants = Keyword.get(options, :variants)
 
@@ -479,18 +497,24 @@ defmodule ExComponent do
       def unquote(name)(), do: unquote(name)([])
 
       def unquote(name)(opts) do
-        render(opts, unquote(options))
+        render_tag(opts, unquote(options))
       end
     end
   end
 
   @doc false
-  def render(opts, defaults) do
+  def render_tag(opts, defaults) do
     {opts, private_opts} = merge_default_opts(opts, defaults)
 
     opts
     |> put_component(private_opts)
     |> put_content(:parent, opts)
+  end
+
+  @doc false
+  def render(opts, defaults) do
+    block = Keyword.get(defaults, :default_content, "")
+    render(block, opts, defaults)
   end
 
   @doc false
@@ -511,10 +535,7 @@ defmodule ExComponent do
 
   defp merge_default_opts(opts, defaults) do
     private_opts = Keyword.take(defaults, [:class, :variants, :options])
-
-    default_opts =
-      defaults
-      |> Keyword.drop([:class, :variants, :options])
+    default_opts = Keyword.drop(defaults, [:class, :variants, :options])
 
     opts =
       opts
@@ -712,7 +733,7 @@ defmodule ExComponent do
         Keyword.get(variant_opts, :option)
       end)
       |> Keyword.keys()
-    
+
     options =
       private_opts
       |> Keyword.get(:options, [])
