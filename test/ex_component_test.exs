@@ -1,10 +1,32 @@
 defmodule ExComponentTest do
   use ExUnit.Case
 
-  import ExComponent, only: [render: 2, render: 3]
+  import ExComponent, only: [render_tag: 2, render: 3]
 
   defp assert_safe(result, expected) do
     assert Phoenix.HTML.safe_to_string(result) == expected
+  end
+
+  describe "defstatictag" do
+    defmodule Static do
+      import ExComponent
+
+      defstatictag(:progress_bar, tag: :div, class: "progress-bar", variants: [striped: [class: "striped", prefix: true]])
+
+      defstatictag(:close_button, tag: :div, class: "close", default_content: "&times;")
+    end
+
+    test "defines name/0 function for the given component" do
+      assert_safe Static.progress_bar(), ~s(<div class="progress-bar"></div>)
+    end
+
+    test "defines variant/1 function for the given component" do
+      assert_safe Static.progress_bar(:striped), ~s(<div class="progress-bar progress-bar-striped"></div>)
+    end
+
+    test "with default content" do
+      assert_safe Static.close_button(), ~s(<div class="close">&amp;times;</div>)
+    end
   end
 
   describe "deftag/2" do

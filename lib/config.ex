@@ -10,7 +10,7 @@ defmodule ExComponent.Config do
 
   @config %{
     overridable_opts: ~w[append tag parent prepend wrap_content]a,
-    private_opts: ~w[variants merge prefix option]a
+    private_opts: ~w[variants merge prefix option default_content]a
   }
 
   def get_config(key), do: @config[key]
